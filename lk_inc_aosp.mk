@@ -23,4 +23,7 @@ LKINC ?=  lk/trusty \
           lib \
           device/arm/generic-arm64 \
           device/arm/vexpress-a15 \
+          system/keymaster \
+          system/gatekeeper \
+          hardware/libhardware \
           vendor/google/aosp \

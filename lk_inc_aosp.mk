@@ -18,11 +18,13 @@ LKROOT ?= external/lk
 LKINC ?=  lk/trusty \
           external/lk \
           external/headers \
+	  lk/nxp \
           app \
           external \
           lib \
           device/arm/generic-arm64 \
           device/arm/vexpress-a15 \
+          device/nxp/imx7d \
           system/keymaster \
           system/gatekeeper \
           hardware/libhardware \

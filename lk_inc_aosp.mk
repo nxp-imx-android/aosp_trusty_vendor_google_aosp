@@ -15,16 +15,14 @@
 
 LKROOT ?= external/lk
 
-LKINC ?=  lk/trusty \
+LKINC ?=  trusty/kernel \
           external/lk \
           external/headers \
-	  lk/nxp \
-          app \
-          lib \
-          device/arm/generic-arm64 \
-          device/arm/vexpress-a15 \
-          device/nxp/imx7d \
-          system/keymaster \
-          system/gatekeeper \
-          hardware/libhardware \
-          vendor/google/aosp \
+          trusty/hardware/nxp \
+          trusty/user \
+          trusty/user/app \
+          trusty/user/base \
+          trusty/device/arm/generic-arm64 \
+          trusty/device/arm/vexpress-a15 \
+          trusty/device/nxp/imx7d \
+          trusty/vendor/google/aosp \

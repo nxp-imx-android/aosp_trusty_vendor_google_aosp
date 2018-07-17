@@ -13,4 +13,4 @@
 # limitations under the License.
 #
 
-include vendor/google/aosp/lk_inc_aosp.mk
+include trusty/vendor/google/aosp/lk_inc_aosp.mk

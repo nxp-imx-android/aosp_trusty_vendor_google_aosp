@@ -20,7 +20,6 @@ LKINC ?=  lk/trusty \
           external/headers \
 	  lk/nxp \
           app \
-          external \
           lib \
           device/arm/generic-arm64 \
           device/arm/vexpress-a15 \

@@ -19,8 +19,6 @@ LKINC ?=  trusty/kernel \
           external/lk \
           external/headers \
           trusty/hardware/nxp \
-          trusty/user \
-          trusty/user/app \
           trusty/user/base \
           trusty/device/arm/generic-arm64 \
           trusty/device/arm/vexpress-a15 \

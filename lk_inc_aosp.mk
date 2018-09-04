@@ -24,4 +24,5 @@ LKINC ?=  trusty/kernel \
           trusty/device/arm/vexpress-a15 \
           trusty/device/nxp/imx7d \
           trusty/device/x86/generic-x86_64 \
+          trusty/device/nxp/imx8 \
           trusty/vendor/google/aosp \

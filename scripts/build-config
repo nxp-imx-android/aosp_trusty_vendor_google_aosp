@@ -98,6 +98,7 @@
             "qemu-generic-arm64-test-debug",
         ],
         unit_tests=[
+            "com.android.timer-unittest",
             "com.android.ipc-unittest.ctrl",
             "com.android.storage-unittest.tp.init",
             "com.android.storage-unittest.tp.check",

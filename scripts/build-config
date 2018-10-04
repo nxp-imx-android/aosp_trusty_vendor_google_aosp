@@ -55,4 +55,54 @@
 # ]
 
 [
+    build(
+        projects=[
+            "generic-arm32-debug",
+            "generic-arm32",
+            "generic-arm32-test-debug",
+            "generic-arm32-test",
+            "generic-arm64-debug",
+            "generic-arm64",
+            "generic-arm64-test-debug",
+            "generic-arm64-test",
+            "vexpress-a15-trusty",
+            "imx7d",
+            "pico7d",
+            "sdb7d",
+        ],
+    ),
+    testmap(
+        projects=[
+            "generic-arm64",
+        ],
+        host_tests=[
+            "storage_test",
+            "mock_storage_test",
+        ],
+    ),
+    testmap(
+        projects=[
+            "imx7d",
+        ],
+        host_tests=[
+            "avb_test",
+        ],
+    ),
+    include("../../proprietary/scripts/build-config", optional=True),
+    testmap(
+        projects=[
+            # The projects below are not currently build-able with only aosp
+            # files but we list them here so we can add unittests to the list
+            # and test them before they are checked in.
+            "qemu-generic-arm32-test-debug",
+            "qemu-generic-arm64-test-debug",
+        ],
+        unit_tests=[
+            "com.android.ipc-unittest.ctrl",
+            "com.android.storage-unittest.tp.init",
+            "com.android.storage-unittest.tp.check",
+            "com.android.storage-unittest.tp.clean",
+            "com.android.storage-unittest.tp",
+        ]
+    ),
 ]

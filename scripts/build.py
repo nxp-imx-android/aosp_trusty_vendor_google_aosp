@@ -156,6 +156,9 @@ def main():
     parser.add_argument("--buildid", type=str, help="Server build id")
     parser.add_argument("--jobs", type=str, default=multiprocessing.cpu_count(),
                         help="Max number of build jobs.")
+    parser.add_argument("--test", type=str, action="append",
+                        help="Manually specify test(s) to run. "
+                        "Only build projects that have listed test(s) enabled.")
     parser.add_argument("--skip-build", action="store_true", help="Skip build.")
     parser.add_argument("--skip-tests", action="store_true",
                         help="Skip running tests.")
@@ -174,6 +177,14 @@ def main():
             projects += build_config.get_projects(build=True, have_tests=True)
         else:
             projects.append(project)
+
+    if args.test:
+        def has_test(project_name):
+            """filter function to check if a project has args.test."""
+            project = build_config.get_project(project_name)
+            return not set(args.test).isdisjoint(project.host_tests +
+                                                 project.unit_tests)
+        projects = filter(has_test, projects)
     args.project = projects
     print "Projects", str(projects)
 
@@ -189,7 +200,7 @@ def main():
 
         for project in projects:
             test_result = run_tests.run_tests(build_config, args.build_root,
-                                              project)
+                                              project, test_filter=args.test)
             if not test_result.passed:
                 test_failed.append(project)
             test_results.append(test_result)

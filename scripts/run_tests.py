@@ -58,13 +58,14 @@ class TestResults(object):
            print "  " + test, "PASSED" if passed else "FAILED"
 
 
-def run_tests(build_config, root, project):
+def run_tests(build_config, root, project, test_filter=None):
     """Run tests for a project.
 
     Args:
         build_config: TrustyBuildConfig object.
         root: Trusty build root output directory.
         project: Project name.
+        test_filter: Optional list that limits the tests to run.
 
     Returns:
         TestResults object listing overall and detailed test results.
@@ -85,12 +86,16 @@ def run_tests(build_config, root, project):
         (test_failed if status else test_passed).append(name)
 
     for host_test in tests.host_tests:
+        if test_filter and host_test not in test_filter:
+            continue
         run_test(name="host-test:" + host_test,
                  cmd=["nice",
                       root + "/build-" + project + "/host_tests/" +
                       host_test])
 
     for unit_test in tests.unit_tests:
+        if test_filter and unit_test not in test_filter:
+            continue
         run_test(name="unit-test:" + unit_test,
                  cmd=["nice",
                       root + "/build-" + project + "/run-qemu",

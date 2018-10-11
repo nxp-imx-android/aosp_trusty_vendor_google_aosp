@@ -86,6 +86,7 @@
         ],
         host_tests=[
             "avb_test",
+            "keymaster_test",
         ],
     ),
     include("../../proprietary/scripts/build-config", optional=True),
@@ -101,6 +102,7 @@
             "com.android.kernel.smp-unittest",
             "com.android.timer-unittest",
             "com.android.ipc-unittest.ctrl",
+            "com.android.keymaster-unittest",
             "com.android.storage-unittest.tp.init",
             "com.android.storage-unittest.tp.check",
             "com.android.storage-unittest.tp.clean",

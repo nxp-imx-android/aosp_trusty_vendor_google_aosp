@@ -96,6 +96,10 @@ def build(args):
     mkdir(args.build_root)
     mkdir(args.archive)
 
+    if args.buildid is None:
+        args.buildid = get_new_build_id(args.build_root)
+    print "BuildID", args.buildid
+
     # build projects
     failed = []
 
@@ -159,10 +163,6 @@ def main():
 
     if args.archive is None:
         args.archive = os.path.join(args.build_root, "archive")
-
-    if args.buildid is None:
-        args.buildid = get_new_build_id(args.build_root)
-    print "BuildID", args.buildid
 
     build_config = trusty_build_config.TrustyBuildConfig()
 

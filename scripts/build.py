@@ -107,6 +107,8 @@ def build(args):
         cmd = "source " + os.path.join(script_dir, "envsetup.sh")
         cmd += "; export BUILDROOT=" + args.build_root
         cmd += "; export BUILDID=" + args.buildid
+        if args.clang is not None:
+            cmd += "; export CLANGBUILD=" + str(args.clang).lower()
         cmd += "; nice make " + project + " -j " + str(args.jobs)
         status = subprocess.call(cmd, shell=True, executable="/bin/bash")
         print "cmd: '" + cmd + "' returned", status
@@ -159,6 +161,10 @@ def main():
     parser.add_argument("--test", type=str, action="append",
                         help="Manually specify test(s) to run. "
                         "Only build projects that have listed test(s) enabled.")
+    parser.add_argument("--clang", action="store_true", default=None,
+                        help="Build with clang.")
+    parser.add_argument("--gcc", action="store_false", dest="clang",
+                        help="Build with GCC.")
     parser.add_argument("--skip-build", action="store_true", help="Skip build.")
     parser.add_argument("--skip-tests", action="store_true",
                         help="Skip running tests.")

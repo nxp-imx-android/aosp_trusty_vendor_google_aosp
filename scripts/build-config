@@ -97,6 +97,7 @@
             # and test them before they are checked in.
             "qemu-generic-arm32-test-debug",
             "qemu-generic-arm64-test-debug",
+            "qemu-generic-arm64u32-test-debug",
         ],
         unit_tests=[
             "com.android.kernel.smp-unittest",

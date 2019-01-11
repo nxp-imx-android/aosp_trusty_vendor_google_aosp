@@ -102,6 +102,7 @@
         ],
         unit_tests=[
             "com.android.kernel.smp-unittest",
+            "com.android.kernel.usercopy-unittest",
             "com.android.timer-unittest",
             "com.android.ipc-unittest.ctrl",
             "com.android.keymaster-unittest",

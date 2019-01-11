@@ -58,7 +58,7 @@ class TestResults(object):
            print "  " + test, "PASSED" if passed else "FAILED"
 
 
-def run_tests(build_config, root, project, test_filter=None):
+def run_tests(build_config, root, project, test_filter=None, verbose=False):
     """Run tests for a project.
 
     Args:
@@ -100,7 +100,8 @@ def run_tests(build_config, root, project, test_filter=None):
                  cmd=["nice",
                       root + "/build-" + project + "/run",
                       "--headless",
-                      "--boot-test", unit_test])
+                      "--boot-test", unit_test
+                      ] + (["--verbose"] if verbose else []))
 
     if test_passed:
         print len(test_passed), "tests passed for project", project + ":"

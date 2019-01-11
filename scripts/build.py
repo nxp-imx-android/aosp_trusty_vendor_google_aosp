@@ -161,6 +161,8 @@ def main():
     parser.add_argument("--test", type=str, action="append",
                         help="Manually specify test(s) to run. "
                         "Only build projects that have listed test(s) enabled.")
+    parser.add_argument("--verbose", action="store_true",
+                        help="Verbose debug output from test(s).")
     parser.add_argument("--clang", action="store_true", default=None,
                         help="Build with clang.")
     parser.add_argument("--gcc", action="store_false", dest="clang",
@@ -206,7 +208,8 @@ def main():
 
         for project in projects:
             test_result = run_tests.run_tests(build_config, args.build_root,
-                                              project, test_filter=args.test)
+                                              project, test_filter=args.test,
+                                              verbose=args.verbose)
             if not test_result.passed:
                 test_failed.append(project)
             test_results.append(test_result)

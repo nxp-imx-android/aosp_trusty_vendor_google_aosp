@@ -98,10 +98,9 @@ def run_tests(build_config, root, project, test_filter=None):
             continue
         run_test(name="unit-test:" + unit_test,
                  cmd=["nice",
-                      root + "/build-" + project + "/run-qemu",
-                      "-semihosting-config", "arg=boottest " + unit_test,
-                      "-serial", "null",
-                      "-serial", "mon:stdio"])
+                      root + "/build-" + project + "/run",
+                      "--headless",
+                      "--boot-test", unit_test])
 
     if test_passed:
         print len(test_passed), "tests passed for project", project + ":"

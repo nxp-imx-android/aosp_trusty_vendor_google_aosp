@@ -101,6 +101,7 @@
             "qemu-generic-arm64u32-test-debug",
         ],
         unit_tests=[
+            "com.android.kernel.console-unittest",
             "com.android.kernel.smp-unittest",
             "com.android.kernel.usercopy-unittest",
             "com.android.timer-unittest",

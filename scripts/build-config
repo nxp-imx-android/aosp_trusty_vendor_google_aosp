@@ -43,6 +43,10 @@
 #             hosttest("some_host_binary"),
 #             # Use test-runner to activate a Trusty IPC port
 #             boottest("port.under.test"),
+#             # Use Android to activate a Trusty IPC port
+#             androidport("port.under.test"),
+#             # Run a shell command inside Android
+#             androidtest(name="test_name", command="command to run"),
 #             ...
 #         ],
 #     ),
@@ -111,6 +115,21 @@
             boottest("com.android.storage-unittest.tp.check"),
             boottest("com.android.storage-unittest.tp.clean"),
             boottest("com.android.storage-unittest.tp"),
+
+            # Android shell port tests - same as above, but triggered with
+            # Linux + android userspace present
+            # Storage tests are omitted due to current emulation limits
+            androidport("com.android.kernel.console-unittest"),
+            androidport("com.android.kernel.smp-unittest"),
+            androidport("com.android.kernel.usercopy-unittest"),
+            androidport("com.android.timer-unittest"),
+            androidport("com.android.ipc-unittest.ctrl"),
+            androidport("com.android.appmgmt-unittest.appmngr"),
+
+            # TIPC tests
+            androidtest(name="tipc:ta2ta",
+                        command="/data/nativetest64/tipc-test/tipc-test "
+                                "-t ta2ta-ipc"),
         ]
     ),
 ]

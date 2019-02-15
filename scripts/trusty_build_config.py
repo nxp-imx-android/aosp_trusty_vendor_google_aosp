@@ -109,12 +109,25 @@ class TrustyBuildConfig(object):
             return TrustyTest("boot-test:" + boot_port,
                               ["run", "--headless", "--boot-test", boot_port])
 
+        def androidtest(name, command):
+            return TrustyTest("android-test:" + name,
+                              ["run", "--headless", "--shell-command", command])
+
+        def androidport(port):
+            port_command = ("/data/nativetest64/trusty-ut-ctrl/trusty-ut-ctrl "
+                            + port)
+            return TrustyTest("android-port-test:" + port,
+                              ["run", "--headless", "--shell-command",
+                               port_command])
+
         file_format = {
             "include": include,
             "build": build,
             "testmap": testmap,
             "hosttest": hosttest,
             "boottest": boottest,
+            "androidtest": androidtest,
+            "androidport": androidport,
         }
 
         with open(path) as f:

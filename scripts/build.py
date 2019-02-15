@@ -190,8 +190,8 @@ def main():
         def has_test(project_name):
             """filter function to check if a project has args.test."""
             project = build_config.get_project(project_name)
-            return not set(args.test).isdisjoint(project.host_tests +
-                                                 project.unit_tests)
+            test_names = [test.name for test in project.tests]
+            return not set(args.test).isdisjoint(test_names)
         projects = filter(has_test, projects)
     args.project = projects
     print "Projects", str(projects)

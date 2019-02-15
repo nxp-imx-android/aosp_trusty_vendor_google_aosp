@@ -31,16 +31,20 @@ class TrustyBuildConfigProject(object):
 
     Attributes:
         build: A boolean indicating if project should be built be default.
-        host_tests: List of host_tests to run for this project.
-        unit_tests: List of unit_tests to run for this project.
+        tests: A list of commands to run to test this project.
     """
 
     def __init__(self):
-        """Inits TrustyBuildConfigProject with empty test lists and no build."""
+        """Inits TrustyBuildConfigProject with an empty test list and no
+           build."""
         self.build = False
-        self.host_tests = []
-        self.unit_tests = []
+        self.tests = []
 
+class TrustyTest(object):
+    """Stores a pair of a test name and a command to run"""
+    def __init__(self, name, command):
+        self.name = name
+        self.command = command
 
 class TrustyBuildConfig(object):
     """Trusty build and test configuration file parser."""
@@ -87,23 +91,30 @@ class TrustyBuildConfig(object):
                 project = self.get_project(project_name)
                 project.build = bool(enabled)
 
-        def testmap(projects, host_tests=(), unit_tests=()):
+        def testmap(projects, tests=()):
             """Process testmap statement in config file."""
             for project_name in projects:
                 if self.debug:
                     print "testmap", project_name, "build", build
-                    for host_test in host_tests:
-                        print "  host_test", host_test
-                    for unit_test in unit_tests:
-                        print "  unit_test", unit_test
+                    for test in tests:
+                        print test
                 project = self.get_project(project_name)
-                project.host_tests += host_tests
-                project.unit_tests += unit_tests
+                project.tests += tests
+
+        def hosttest(host_cmd):
+            return TrustyTest("host-test:" + host_cmd,
+                              ["host_tests/" + host_cmd])
+
+        def boottest(boot_port):
+            return TrustyTest("boot-test:" + boot_port,
+                              ["run", "--headless", "--boot-test", boot_port])
 
         file_format = {
             "include": include,
             "build": build,
             "testmap": testmap,
+            "hosttest": hosttest,
+            "boottest": boottest,
         }
 
         with open(path) as f:
@@ -134,8 +145,7 @@ class TrustyBuildConfig(object):
 
             return ((build is None or build == project.build) and
                     (have_tests is None or
-                     have_tests == bool(project.host_tests or
-                                        project.unit_tests)))
+                     have_tests == bool(project.tests)))
 
         return filter(match, sorted(self.projects.keys()))
 
@@ -160,12 +170,9 @@ def list_config(args):
     for project_name, project in sorted(config.projects.items()):
         print "  " + project_name + ":"
         print "    Build:", project.build
-        print "    Host tests:"
-        for host_test in project.host_tests:
-            print "      " + host_test
-        print "    Unit tests:"
-        for unit_test in project.unit_tests:
-            print "      " + unit_test
+        print "    Tests:"
+        for test in project.tests:
+            print "      " + test.name
 
     for build in [True, False]:
         print
@@ -174,15 +181,49 @@ def list_config(args):
             projects = config.get_projects(build=build, have_tests=tested)
             for project in sorted(projects):
                 print "  " + project + ":"
-                tests = config.get_project(project)
-                for test_type, test_list in [("Host-tests", tests.host_tests),
-                                             ("Unit-tests", tests.unit_tests)]:
-                    if test_list:
-                        print "    " + test_type + ":"
-                        for test in test_list:
-                            print "      " + test
+                project_config = config.get_project(project)
+                for test in project_config.tests:
+                    print "    " + test.name
             if projects and not tested:
                 print "    No tests"
+
+
+def any_test_name(regex, tests):
+    """Checks the name of all tests in a list for a regex.
+
+    This is intended only as part of the selftest facility, do not use it
+    to decide how to consider actual tests.
+
+    Args:
+        tests: List of tests to check the names of
+        regex: Regular expression to check them for (as a string)
+    """
+
+    return any([re.match(regex, test.name) is not None for test in tests])
+
+
+def has_host(tests):
+    """Checks for a host test in the provided tests by name.
+
+    This is intended only as part of the selftest facility, do not use it
+    to decide how to consider actual tests.
+
+    Args:
+        tests: List of tests to check for host tests
+    """
+    return any_test_name("host-test:", tests)
+
+
+def has_unit(tests):
+    """Checks for a unit test in the provided tests by name.
+
+    This is intended only as part of the selftest facility, do not use it
+    to decide how to consider actual tests.
+
+    Args:
+        tests: List of tests to check for unit tests
+    """
+    return any_test_name("boot-test:", tests)
 
 
 def test_config(args):
@@ -236,34 +277,36 @@ def test_config(args):
 
     print "get_projects test passed"
 
-    for project in config.get_projects():
-        tests = config.get_project(project)
+    for project_name in config.get_projects():
+        project = config.get_project(project_name)
         if args.debug:
-            print project, tests
-        m = project_regex.match(project)
+            print project_name, project
+        m = project_regex.match(project_name)
         assert m
-        if tests.host_tests:
-            if tests.unit_tests:
-                assert m.group(2) == "both"
-            else:
-                assert m.group(2) == "host"
+        kind = m.group(2)
+        if kind == "both":
+            assert has_host(project.tests)
+            assert has_unit(project.tests)
+        elif kind == "unit":
+            assert not has_host(project.tests)
+            assert has_unit(project.tests)
+        elif kind == "host":
+            assert has_host(project.tests)
+            assert not has_unit(project.tests)
+        elif kind == "none":
+            assert not has_host(project.tests)
+            assert not has_unit(project.tests)
         else:
-            if tests.unit_tests:
-                assert m.group(2) == "unit"
-            else:
-                assert m.group(2) == "none"
+            assert False or "Unknown project kind"
 
-        for i, host_test in enumerate(tests.host_tests):
-            m = re.match(r"self_test\.host_test.*\.(\d+)", host_test)
+        for i, test in enumerate(project.tests):
+            host_m = re.match(r"host-test:self_test.*\.(\d+)",
+                              test.name)
+            unit_m = re.match(r"boot-test:self_test.*\.(\d+)",
+                              test.name)
             if args.debug:
-                print project, "host_test", i, host_test
-            assert m
-            assert m.group(1) == str(i + 1)
-
-        for i, unit_test in enumerate(tests.unit_tests):
-            m = re.match(r"self_test\.unit_test.*\.(\d+)", unit_test)
-            if args.debug:
-                print project, "unit_test", i, unit_test
+                print project, i, test.name
+            m = host_m or unit_m
             assert m
             assert m.group(1) == str(i + 1)
 

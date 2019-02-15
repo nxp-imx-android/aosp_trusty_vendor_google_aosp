@@ -70,7 +70,7 @@ def run_tests(build_config, root, project, test_filter=None, verbose=False):
     Returns:
         TestResults object listing overall and detailed test results.
     """
-    tests = build_config.get_project(project=project)
+    project_config = build_config.get_project(project=project)
 
     test_results = TestResults(project)
     test_failed = []
@@ -85,23 +85,13 @@ def run_tests(build_config, root, project, test_filter=None, verbose=False):
         test_results.add_result(name, status == 0)
         (test_failed if status else test_passed).append(name)
 
-    for host_test in tests.host_tests:
-        if test_filter and host_test not in test_filter:
+    for test in project_config.tests:
+        if test_filter and test.name not in test_filter:
             continue
-        run_test(name="host-test:" + host_test,
-                 cmd=["nice",
-                      root + "/build-" + project + "/host_tests/" +
-                      host_test])
-
-    for unit_test in tests.unit_tests:
-        if test_filter and unit_test not in test_filter:
-            continue
-        run_test(name="unit-test:" + unit_test,
-                 cmd=["nice",
-                      root + "/build-" + project + "/run",
-                      "--headless",
-                      "--boot-test", unit_test
-                      ] + (["--verbose"] if verbose else []))
+        project_root = root + "/build-" + project + "/"
+        cmd = (["nice", project_root + test.command[0]] + test.command[1:]
+               + (["--verbose"] if verbose else []))
+        run_test(name=test.name, cmd=cmd)
 
     if test_passed:
         print len(test_passed), "tests passed for project", project + ":"

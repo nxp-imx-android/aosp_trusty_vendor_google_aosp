@@ -37,14 +37,12 @@
 #             "<project>",
 #             ...
 #         ]
-#         # List of host-tests to run (on the host). Optional.
-#         host_tests=[
-#             "<host_test>",
-#             ...
-#         ],
-#         # List of unit-tests to run (under qemu). Optional.
-#         unit_tests=[
-#             "<unit_test>",
+#         # List of host-tests to run. Optional
+#         tests=[
+#             # Run a program on the host
+#             hosttest("some_host_binary"),
+#             # Use test-runner to activate a Trusty IPC port
+#             boottest("port.under.test"),
 #             ...
 #         ],
 #     ),
@@ -76,18 +74,18 @@
         projects=[
             "generic-arm64",
         ],
-        host_tests=[
-            "storage_test",
-            "mock_storage_test",
+        tests=[
+            hosttest("storage_test"),
+            hosttest("mock_storage_test"),
         ],
     ),
     testmap(
         projects=[
             "imx7d",
         ],
-        host_tests=[
-            "avb_test",
-            "keymaster_test",
+        tests=[
+            hosttest("avb_test"),
+            hosttest("keymaster_test"),
         ],
     ),
     include("../../proprietary/scripts/build-config", optional=True),
@@ -100,18 +98,19 @@
             "qemu-generic-arm64-test-debug",
             "qemu-generic-arm64u32-test-debug",
         ],
-        unit_tests=[
-            "com.android.kernel.console-unittest",
-            "com.android.kernel.smp-unittest",
-            "com.android.kernel.usercopy-unittest",
-            "com.android.timer-unittest",
-            "com.android.ipc-unittest.ctrl",
-            "com.android.appmgmt-unittest.appmngr",
-            "com.android.keymaster-unittest",
-            "com.android.storage-unittest.tp.init",
-            "com.android.storage-unittest.tp.check",
-            "com.android.storage-unittest.tp.clean",
-            "com.android.storage-unittest.tp",
+        tests=[
+            # Boot tests (test-runner + kernel only)
+            boottest("com.android.kernel.console-unittest"),
+            boottest("com.android.kernel.smp-unittest"),
+            boottest("com.android.kernel.usercopy-unittest"),
+            boottest("com.android.timer-unittest"),
+            boottest("com.android.ipc-unittest.ctrl"),
+            boottest("com.android.appmgmt-unittest.appmngr"),
+            boottest("com.android.keymaster-unittest"),
+            boottest("com.android.storage-unittest.tp.init"),
+            boottest("com.android.storage-unittest.tp.check"),
+            boottest("com.android.storage-unittest.tp.clean"),
+            boottest("com.android.storage-unittest.tp"),
         ]
     ),
 ]

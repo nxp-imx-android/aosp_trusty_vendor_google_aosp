@@ -113,14 +113,31 @@
             boottest("com.android.storage-unittest.tp.check"),
             boottest("com.android.storage-unittest.tp.clean"),
             boottest("com.android.storage-unittest.tp"),
+            boottest("com.android.storage-unittest.tdea.init"),
+            boottest("com.android.storage-unittest.tdea.check"),
+            boottest("com.android.storage-unittest.tdea.clean"),
+            boottest("com.android.storage-unittest.tdea"),
 
             # Android shell port tests - same as above, but triggered with
             # Linux + android userspace present
-            # Storage tests are omitted due to current emulation limits
             androidport("com.android.libctest"),
             androidport("com.android.timer-unittest"),
             androidport("com.android.ipc-unittest.ctrl"),
             androidport("com.android.appmgmt-unittest.appmngr"),
+            androidport("com.android.keymaster-unittest"),
+            androidport("com.android.storage-unittest.tp.init"),
+            androidport("com.android.storage-unittest.tp.check"),
+            androidport("com.android.storage-unittest.tp.clean"),
+            androidport("com.android.storage-unittest.tp"),
+            androidport("com.android.storage-unittest.tdea.init"),
+            androidport("com.android.storage-unittest.tdea.check"),
+            androidport("com.android.storage-unittest.tdea.clean"),
+            androidport("com.android.storage-unittest.tdea"),
+
+            # Storage tests which require a nonsecure file
+            # These need Android or a similar resource to run, simple RPMB
+            # in testrunner is insufficient.
+            androidport("com.android.storage-unittest.td"),
 
             # TIPC tests
             androidtest(name="tipc:ta2ta",

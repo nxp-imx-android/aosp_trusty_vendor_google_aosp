@@ -105,6 +105,7 @@
         tests=[
             # Boot tests (test-runner + kernel only)
             boottest("com.android.kernel.console-unittest"),
+            boottest("com.android.kernel.iovectest"),
             boottest("com.android.kernel.smp-unittest"),
             boottest("com.android.kernel.usercopy-unittest"),
             boottest("com.android.timer-unittest"),
@@ -120,6 +121,7 @@
             # Linux + android userspace present
             # Storage tests are omitted due to current emulation limits
             androidport("com.android.kernel.console-unittest"),
+            androidport("com.android.kernel.iovectest"),
             androidport("com.android.kernel.smp-unittest"),
             androidport("com.android.kernel.usercopy-unittest"),
             androidport("com.android.timer-unittest"),

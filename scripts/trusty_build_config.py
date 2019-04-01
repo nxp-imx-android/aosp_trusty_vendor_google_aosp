@@ -25,6 +25,8 @@ import argparse
 import os
 import re
 
+script_dir = os.path.dirname(os.path.abspath(__file__))
+
 
 class TrustyBuildConfigProject(object):
     """Stores build enabled status and test lists for a project
@@ -60,7 +62,6 @@ class TrustyBuildConfig(object):
         self.debug = debug
         self.projects = {}
         if config_file is None:
-            script_dir = os.path.dirname(os.path.abspath(__file__))
             config_file = os.path.join(script_dir, "build-config")
         self.read_config_file(config_file)
 
@@ -80,8 +81,9 @@ class TrustyBuildConfig(object):
             """Process include statement in config file."""
             if self.debug:
                 print "include", path, "optional", optional
-            self.read_config_file(path=os.path.join(config_dir, path),
-                                  optional=optional)
+            if path.startswith("."):
+                path = os.path.join(config_dir, path)
+            return self.read_config_file(path=path, optional=optional)
 
         def build(projects, enabled=True):
             """Process build statement in config file."""
@@ -131,7 +133,7 @@ class TrustyBuildConfig(object):
         }
 
         with open(path) as f:
-            eval(f.read(), file_format)
+            return eval(f.read(), file_format)  # pylint: disable=eval-used
 
     def get_project(self, project):
         """Return TrustyBuildConfigProject entry for a project."""
@@ -248,7 +250,6 @@ def test_config(args):
     Args:
         args: Program arguments.
     """
-    script_dir = os.path.dirname(os.path.abspath(__file__))
     config_file = os.path.join(script_dir, "trusty_build_config_self_test_main")
     config = TrustyBuildConfig(config_file=config_file, debug=args.debug)
 
@@ -327,6 +328,9 @@ def test_config(args):
 
 
 def main():
+    top = os.path.abspath(os.path.join(script_dir, "../../../../.."))
+    os.chdir(top)
+
     parser = argparse.ArgumentParser()
     parser.add_argument("-d", "--debug", action="store_true")
     parser.add_argument("--file")

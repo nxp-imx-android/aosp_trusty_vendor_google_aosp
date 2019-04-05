@@ -143,6 +143,20 @@
             androidtest(name="tipc:ta2ta",
                         command="/data/nativetest64/tipc-test/tipc-test "
                                 "-t ta2ta-ipc"),
+
+            # VTS
+            androidtest(name="vts:gatekeeper@1.0",
+                        command="/data/nativetest64/"
+                                "VtsHalGatekeeperV1_0TargetTest/"
+                                "VtsHalGatekeeperV1_0TargetTest"),
+            # Disabling RsaNoDigest until b/129294086 is resolved
+            # (Spec and reference implementation disagree on the error code.)
+            androidtest(name="vts:keymaster@3.0",
+                        command="/data/nativetest64/"
+                                "VtsHalKeymasterV3_0TargetTest/"
+                                "VtsHalKeymasterV3_0TargetTest"
+                                " --gtest_filter="
+                                "\"-SigningOperationsTest.RsaNoDigest\""),
         ]
     ),
 ]

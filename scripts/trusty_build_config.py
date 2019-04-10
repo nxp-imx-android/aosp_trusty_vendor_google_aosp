@@ -188,7 +188,8 @@ def list_config(args):
         print "    Build:", project.build
         print "    Tests:"
         for test in project.tests:
-            print "      " + test.name
+            print "      " + test.name + ":"
+            print "        " + str(test.command)
 
     for build in [True, False]:
         print

@@ -133,7 +133,8 @@ class TrustyBuildConfig(object):
         }
 
         with open(path) as f:
-            return eval(f.read(), file_format)  # pylint: disable=eval-used
+            code = compile(f.read(), path, "eval")
+            return eval(code, file_format)  # pylint: disable=eval-used
 
     def get_project(self, project):
         """Return TrustyBuildConfigProject entry for a project."""

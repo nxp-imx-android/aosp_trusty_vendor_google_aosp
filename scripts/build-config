@@ -102,46 +102,18 @@
             "qemu-generic-arm64-test-debug",
             "qemu-generic-arm64u32-test-debug",
         ],
-        tests=include("trusty/kernel/build-config-kerneltests") + [
+        tests=[
             # Boot tests (test-runner + kernel only)
-            boottest("com.android.libctest"),
-            boottest("com.android.timer-unittest"),
-            boottest("com.android.ipc-unittest.ctrl"),
-            boottest("com.android.appmgmt-unittest.appmngr"),
-            boottest("com.android.appmgmt-unittest.syscalls"),
-            boottest("com.android.appmgmt-unittest.syscalls.aux"),
-            boottest("com.android.keymaster-unittest"),
-            boottest("com.android.storage-unittest.tp.init"),
-            boottest("com.android.storage-unittest.tp.check"),
-            boottest("com.android.storage-unittest.tp.clean"),
-            boottest("com.android.storage-unittest.tp"),
-            boottest("com.android.storage-unittest.tdea.init"),
-            boottest("com.android.storage-unittest.tdea.check"),
-            boottest("com.android.storage-unittest.tdea.clean"),
-            boottest("com.android.storage-unittest.tdea"),
-
+            boottests([
+                include("trusty/kernel/build-config-kerneltests"),
+                include("trusty/user/base/build-config-usertests"),
+            ]),
             # Android shell port tests - same as above, but triggered with
             # Linux + android userspace present
-            androidport("com.android.libctest"),
-            androidport("com.android.timer-unittest"),
-            androidport("com.android.ipc-unittest.ctrl"),
-            androidport("com.android.appmgmt-unittest.appmngr"),
-            androidport("com.android.appmgmt-unittest.syscalls"),
-            androidport("com.android.appmgmt-unittest.syscalls.aux"),
-            androidport("com.android.keymaster-unittest"),
-            androidport("com.android.storage-unittest.tp.init"),
-            androidport("com.android.storage-unittest.tp.check"),
-            androidport("com.android.storage-unittest.tp.clean"),
-            androidport("com.android.storage-unittest.tp"),
-            androidport("com.android.storage-unittest.tdea.init"),
-            androidport("com.android.storage-unittest.tdea.check"),
-            androidport("com.android.storage-unittest.tdea.clean"),
-            androidport("com.android.storage-unittest.tdea"),
-
-            # Storage tests which require a nonsecure file
-            # These need Android or a similar resource to run, simple RPMB
-            # in testrunner is insufficient.
-            androidport("com.android.storage-unittest.td"),
+            androidporttests([
+                include("trusty/kernel/build-config-kerneltests"),
+                include("trusty/user/base/build-config-usertests"),
+            ]),
 
             # TIPC tests
             androidtest(name="tipc:ta2ta",
@@ -161,6 +133,6 @@
                                 "VtsHalKeymasterV3_0TargetTest"
                                 " --gtest_filter="
                                 "\"-SigningOperationsTest.RsaNoDigest\""),
-        ]
+        ],
     ),
 ]

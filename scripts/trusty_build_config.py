@@ -42,11 +42,54 @@ class TrustyBuildConfigProject(object):
         self.build = False
         self.tests = []
 
+
+class TrustyPortTestFlags(object):
+    """Stores need flags for a test or provide flags for a test environment."""
+
+    ALLOWED_FLAGS = set([
+        "storage_boot",
+        "storage_full",
+        "smp4",
+    ])
+
+    def __init__(self, **flags):
+        self.flags = set()
+        self.set(**flags)
+
+    def set(self, **flags):
+        """Set flags."""
+        for name, arg in flags.items():
+            if name in self.ALLOWED_FLAGS:
+                if arg:
+                    self.flags.add(name)
+                else:
+                    self.flags.discard(name)
+            else:
+                raise TypeError("Unexpected flag: " + name)
+
+    def match_provide(self, provide):
+        return self.flags.issubset(provide.flags)
+
+
 class TrustyTest(object):
     """Stores a pair of a test name and a command to run"""
     def __init__(self, name, command):
         self.name = name
         self.command = command
+
+
+class TrustyPortTest(TrustyTest):
+    """Stores a trusty port name for a test to run."""
+
+    def __init__(self, port):
+        super(TrustyPortTest, self).__init__(None, None)
+        self.port = port
+        self.need = TrustyPortTestFlags()
+
+    def needs(self, **need):
+        self.need.set(**need)
+        return self
+
 
 class TrustyBuildConfig(object):
     """Trusty build and test configuration file parser."""
@@ -119,29 +162,68 @@ class TrustyBuildConfig(object):
             return TrustyTest("host-test:" + host_cmd,
                               ["host_tests/" + host_cmd])
 
-        def boottest(boot_port):
-            return TrustyTest("boot-test:" + boot_port,
-                              ["run", "--headless", "--boot-test", boot_port])
+        def porttest_match(test, provides):
+            return (isinstance(test, TrustyPortTest)
+                    and test.need.match_provide(provides))
 
-        def androidtest(name, command):
-            return TrustyTest("android-test:" + name,
-                              ["run", "--headless", "--shell-command", command])
+        def porttests_filter(tests, provides):
+            return [test for test in flatten_list(tests)
+                    if porttest_match(test, provides)]
 
-        def androidport(port):
-            port_command = ("/data/nativetest64/trusty-ut-ctrl/trusty-ut-ctrl "
-                            + port)
-            return TrustyTest("android-port-test:" + port,
-                              ["run", "--headless", "--shell-command",
-                               port_command])
+        def boottests(port_tests, provides=None):
+            if provides is None:
+                provides = TrustyPortTestFlags(storage_boot=True,
+                                               smp4=True)
+            return [TrustyTest("boot-test:" + test.port,
+                               ["run", "--headless", "--boot-test", test.port])
+                    for test in porttests_filter(port_tests, provides)]
+
+        def androidtest(name, command, nameprefix="", runargs=()):
+            nameprefix = nameprefix + "android-test:"
+            runargs = list(runargs)
+            return TrustyTest(nameprefix + name,
+                              ["run", "--headless",
+                               "--shell-command", command
+                              ] + runargs,
+                             )
+
+        def androidporttest(port, cmdargs=(), **kwargs):
+            cmdargs = list(cmdargs)
+            cmd = " ".join(
+                [
+                    "/data/nativetest64/trusty-ut-ctrl/trusty-ut-ctrl",
+                    port
+                ] + cmdargs)
+            return androidtest(port, cmd, **kwargs)
+
+        def androidporttests(port_tests, provides=None, nameprefix="",
+                             cmdargs=(), runargs=()):
+            nameprefix = nameprefix + "android-port-test:"
+            if provides is None:
+                provides = TrustyPortTestFlags(storage_boot=True,
+                                               storage_full=True,
+                                               smp4=True)
+            return [androidporttest(test.port, nameprefix=nameprefix,
+                                    cmdargs=cmdargs, runargs=runargs)
+                    for test in porttests_filter(port_tests, provides)]
+
+        def needs(tests, *args, **kwargs):
+            return [
+                test.needs(*args, **kwargs)
+                for test in flatten_list(tests)
+            ]
 
         file_format = {
             "include": include,
             "build": build,
             "testmap": testmap,
             "hosttest": hosttest,
-            "boottest": boottest,
+            "porttest": TrustyPortTest,
+            "porttestflags": TrustyPortTestFlags,
+            "boottests": boottests,
             "androidtest": androidtest,
-            "androidport": androidport,
+            "androidporttests": androidporttests,
+            "needs": needs,
         }
 
         with open(path) as f:

@@ -19,6 +19,7 @@
 import argparse
 import multiprocessing
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -160,7 +161,8 @@ def main():
                         help="Max number of build jobs.")
     parser.add_argument("--test", type=str, action="append",
                         help="Manually specify test(s) to run. "
-                        "Only build projects that have listed test(s) enabled.")
+                        "Only build projects that have test(s) enabled that "
+                        "matches a listed regex.")
     parser.add_argument("--verbose", action="store_true",
                         help="Verbose debug output from test(s).")
     parser.add_argument("--clang", action="store_true", default=None,
@@ -187,11 +189,14 @@ def main():
             projects.append(project)
 
     if args.test:
+        args.test = [re.compile(testpattern) for testpattern in args.test]
         def has_test(project_name):
             """filter function to check if a project has args.test."""
             project = build_config.get_project(project_name)
-            test_names = [test.name for test in project.tests]
-            return not set(args.test).isdisjoint(test_names)
+            for test in project.tests:
+                if run_tests.test_should_run(test.name, args.test):
+                    return True
+            return False
         projects = filter(has_test, projects)
     args.project = projects
     print "Projects", str(projects)

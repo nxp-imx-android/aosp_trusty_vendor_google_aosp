@@ -58,6 +58,25 @@ class TestResults(object):
            print "  " + test, "PASSED" if passed else "FAILED"
 
 
+def test_should_run(testname, test_filter):
+    """Check if test should run.
+
+    Args:
+        testname: Name of test to check.
+        test_filter: Regex list that limits the tests to run.
+
+    Returns:
+        True if test_filter list is empty or None, True if testname matches any
+        regex in test_filter, False otherwise.
+    """
+    if not test_filter:
+        return True
+    for r in test_filter:
+        if r.search(testname):
+            return True
+    return False
+
+
 def run_tests(build_config, root, project, test_filter=None, verbose=False):
     """Run tests for a project.
 
@@ -86,7 +105,7 @@ def run_tests(build_config, root, project, test_filter=None, verbose=False):
         (test_failed if status else test_passed).append(name)
 
     for test in project_config.tests:
-        if test_filter and test.name not in test_filter:
+        if not test_should_run(test.name, test_filter):
             continue
         project_root = root + "/build-" + project + "/"
         cmd = (["nice", project_root + test.command[0]] + test.command[1:]

@@ -77,6 +77,18 @@ class TrustyBuildConfig(object):
 
         config_dir = os.path.dirname(path)
 
+        def _flatten_list(inp, out):
+            for obj in inp:
+                if isinstance(obj, list):
+                    _flatten_list(obj, out)
+                else:
+                    out.append(obj)
+
+        def flatten_list(inp):
+            out = []
+            _flatten_list(inp, out)
+            return out
+
         def include(path, optional=False):
             """Process include statement in config file."""
             if self.debug:
@@ -101,7 +113,7 @@ class TrustyBuildConfig(object):
                     for test in tests:
                         print test
                 project = self.get_project(project_name)
-                project.tests += tests
+                project.tests += flatten_list(tests)
 
         def hosttest(host_cmd):
             return TrustyTest("host-test:" + host_cmd,
@@ -134,7 +146,8 @@ class TrustyBuildConfig(object):
 
         with open(path) as f:
             code = compile(f.read(), path, "eval")
-            return eval(code, file_format)  # pylint: disable=eval-used
+            config = eval(code, file_format)  # pylint: disable=eval-used
+            return flatten_list(config)
 
     def get_project(self, project):
         """Return TrustyBuildConfigProject entry for a project."""

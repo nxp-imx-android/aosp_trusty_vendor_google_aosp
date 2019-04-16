@@ -24,6 +24,7 @@
 import argparse
 import subprocess
 import sys
+import time
 
 import trusty_build_config
 
@@ -99,8 +100,11 @@ def run_tests(build_config, root, project, test_filter=None, verbose=False):
         print "Running", name, "on", project
         print "Command line:", " ".join([s.replace(" ", "\\ ") for s in cmd])
         sys.stdout.flush()
+        test_start_time = time.time()
         status = subprocess.call(cmd)
-        print name, "returned", status
+        test_run_time = time.time() - test_start_time
+        print "{:s} returned {:d} after {:.3f} seconds".format(
+            name, status, test_run_time)
         test_results.add_result(name, status == 0)
         (test_failed if status else test_passed).append(name)
 

@@ -212,6 +212,10 @@ def main():
     if not args.skip_tests:
         test_failed = []
         test_results = []
+        tests_passed = 0
+        tests_failed = 0
+        projects_passed = 0
+        projects_failed = 0
 
         for project in projects:
             test_result = run_tests.run_tests(build_config, args.build_root,
@@ -219,19 +223,39 @@ def main():
                                               verbose=args.verbose)
             if not test_result.passed:
                 test_failed.append(project)
+            if test_result.passed_count:
+                projects_passed += 1
+                tests_passed += test_result.passed_count
+            if test_result.failed_count:
+                projects_failed += 1
+                tests_failed += test_result.failed_count
             test_results.append(test_result)
 
         for test_result in test_results:
             test_result.print_results()
 
-        if test_failed:
+        sys.stdout.write("\n")
+        if projects_passed:
+            sys.stdout.write("[  PASSED  ] {} tests in {} projects.\n".format(
+                tests_passed, projects_passed))
+        if projects_failed:
+            sys.stdout.write("[  FAILED  ] {} tests in {} projects.\n".format(
+                tests_failed, projects_failed))
             sys.stdout.flush()
-            sys.stderr.write("\n")
-            sys.stderr.write(str(len(test_failed)) +
-                             " projects have failed tests:\n")
-            sys.stderr.write(str(test_failed) + "\n")
-            exit(1)
 
+            # Print the failed tests again to stderr as the build server will
+            # store this in a separate file with a direct link from the build
+            # status page. The full build long page on the build server, buffers
+            # stdout and stderr and interleaves them at random. By printing
+            # the summary to both stderr and stdout, we get at least one of them
+            # at the bottom of that file.
+            for test_result in test_results:
+                test_result.print_results(print_failed_only=True)
+            sys.stderr.write("[  FAILED  ] {} tests in {} projects.\n".format(
+                tests_failed, projects_failed))
+
+        if test_failed:
+            sys.exit(1)
 
 if __name__ == "__main__":
     main()

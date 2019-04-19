@@ -35,28 +35,54 @@ class TestResults(object):
     Attributes:
         project: Name of project that tests were run on.
         passed: True if all tests passed, False if one or more tests failed.
-        tests: List of tuples storing test name an status.
+        passed_count: Number of tests passed.
+        failed_count: Number of tests failed.
+        test_results: List of tuples storing test name an status.
     """
 
     def __init__(self, project):
         """Inits TestResults with project name and empty test results."""
         self.project = project
         self.passed = True
+        self.passed_count = 0
+        self.failed_count = 0
         self.test_results = []
 
     def add_result(self, test, passed):
         """Add a test result."""
         self.test_results.append((test, passed))
-        if not passed:
+        if passed:
+            self.passed_count += 1
+        else:
             self.passed = False
+            self.failed_count += 1
 
-    def print_results(self):
+    def print_results(self, print_failed_only=False):
         """Print test results."""
-        print "Project:", self.project, "PASSED" if self.passed else "FAILED"
-        if not self.test_results:
-           print "  No tests"
-        for test, passed in self.test_results:
-           print "  " + test, "PASSED" if passed else "FAILED"
+        if print_failed_only:
+            if self.passed:
+                return
+            sys.stdout.flush()
+            out = sys.stderr
+        else:
+            out = sys.stdout
+        test_count = self.passed_count + self.failed_count
+        out.write("\n"
+                  "Ran {} tests for project {}.\n".format(
+                      test_count, self.project))
+        if test_count:
+            for test, passed in self.test_results:
+                if passed:
+                    if not print_failed_only:
+                        out.write("[ {:>8} ] {}\n".format("OK", test))
+                else:
+                    out.write("[ {:^8} ] {}\n".format("FAILED", test))
+            out.write("[==========] {} tests ran for project {}.\n".format(
+                test_count, self.project))
+            if self.passed_count and not print_failed_only:
+                out.write("[  PASSED  ] {} tests.\n".format(self.passed_count))
+            if self.failed_count:
+                out.write("[  FAILED  ] {} tests.\n".format(self.failed_count))
 
 
 def test_should_run(testname, test_filter):
@@ -97,6 +123,7 @@ def run_tests(build_config, root, project, test_filter=None, verbose=False):
     test_passed = []
 
     def run_test(name, cmd):
+        print
         print "Running", name, "on", project
         print "Command line:", " ".join([s.replace(" ", "\\ ") for s in cmd])
         sys.stdout.flush()
@@ -115,18 +142,6 @@ def run_tests(build_config, root, project, test_filter=None, verbose=False):
         cmd = (["nice", project_root + test.command[0]] + test.command[1:]
                + (["--verbose"] if verbose else []))
         run_test(name=test.name, cmd=cmd)
-
-    if test_passed:
-        print len(test_passed), "tests passed for project", project + ":"
-        print test_passed
-    elif not test_failed:
-        print "No tests ran for project", project
-    if test_failed:
-        sys.stdout.flush()
-        sys.stderr.write("\n")
-        sys.stderr.write(str(len(test_failed)) +
-                         " tests have failed for project " + project + ":\n")
-        sys.stderr.write(str(test_failed) + "\n")
 
     return test_results
 

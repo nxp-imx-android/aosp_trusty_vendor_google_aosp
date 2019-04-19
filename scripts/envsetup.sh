@@ -19,3 +19,5 @@ export ARCH_arm64_TOOLCHAIN_PREFIX=${TRUSTY_TOP}/prebuilts/gcc/linux-x86/aarch64
 export ARCH_x86_64_TOOLCHAIN_PREFIX=${TRUSTY_TOP}/prebuilts/gcc/linux-x86/x86/x86_64-linux-android-4.9/bin/x86_64-linux-android-
 export ARCH_x86_TOOLCHAIN_PREFIX=${TRUSTY_TOP}/prebuilts/gcc/linux-x86/x86/x86_64-linux-android-4.9/bin/x86_64-linux-android-
 
+# Run this last so the error code propagates.
+$(dirname "${BASH_SOURCE[0]}")/check_system_dependencies.sh

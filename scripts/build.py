@@ -105,12 +105,14 @@ def build(args):
     failed = []
 
     for project in args.project:
-        cmd = "source " + os.path.join(script_dir, "envsetup.sh")
-        cmd += "; export BUILDROOT=" + args.build_root
+        cmd = "export BUILDROOT=" + args.build_root
         cmd += "; export BUILDID=" + args.buildid
         if args.clang is not None:
             cmd += "; export CLANGBUILD=" + str(args.clang).lower()
         cmd += "; nice make " + project + " -j " + str(args.jobs)
+        # Call envsetup.  If it fails, abort.
+        cmd = "source %s && (%s)" % (os.path.join(script_dir, "envsetup.sh"),
+                                     cmd)
         status = subprocess.call(cmd, shell=True, executable="/bin/bash")
         print "cmd: '" + cmd + "' returned", status
         if status:

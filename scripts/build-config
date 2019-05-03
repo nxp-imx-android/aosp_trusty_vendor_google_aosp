@@ -118,15 +118,23 @@
                         command="/data/nativetest64/"
                                 "VtsHalGatekeeperV1_0TargetTest/"
                                 "VtsHalGatekeeperV1_0TargetTest"),
-            # Disabling RsaNoDigest until b/129294086 is resolved
-            # (Spec and reference implementation disagree on the error code.)
-            androidtest(name="vts:keymaster@3.0",
+            # VerificationTokenTest.TestCreation and
+            # VerificationTokenTest.MacChangesOnChangingTimestamp *should* pass,
+            # but do timing measurements such that the emulator won't always
+            # pass.
+            #
+            # These tests should pass *most* of the time on the emulator, but
+            # are too flaky to have on in presubmit.
+            #
+            # If we test on real devices, these tests should be *on*.
+            androidtest(name="vts:keymaster@4.0",
                         command="/data/nativetest64/"
-                                "VtsHalKeymasterV3_0TargetTest/"
-                                "VtsHalKeymasterV3_0TargetTest"
+                                "VtsHalKeymasterV4_0TargetTest/"
+                                "VtsHalKeymasterV4_0TargetTest"
                                 " --gtest_filter="
-                                "\"-SigningOperationsTest.RsaNoDigest"
-                                ":AttestationTest.*\""),
+                                "\"-VerificationTokenTest.TestCreation:"
+                                "VerificationTokenTest."
+                                "MacChangesOnChangingTimestamp\""),
         ],
     ),
 ]

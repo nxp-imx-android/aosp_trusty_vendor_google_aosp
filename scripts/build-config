@@ -132,7 +132,8 @@
                                 "VtsHalKeymasterV3_0TargetTest/"
                                 "VtsHalKeymasterV3_0TargetTest"
                                 " --gtest_filter="
-                                "\"-SigningOperationsTest.RsaNoDigest\""),
+                                "\"-SigningOperationsTest.RsaNoDigest"
+                                ":AttestationTest.*\""),
         ],
     ),
 ]

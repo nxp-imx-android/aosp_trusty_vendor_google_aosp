@@ -145,6 +145,15 @@ def build(args):
                         " -@", shell=True, executable="/bin/bash")
 
 
+def get_build_deps(project_name, project, project_names, already_built):
+    if project_name not in already_built:
+        already_built.add(project_name)
+        for dep_project_name, dep_project in project.also_build.items():
+            get_build_deps(dep_project_name, dep_project, project_names,
+                           already_built)
+        project_names.append(project_name)
+
+
 def main():
     top = os.path.abspath(os.path.join(script_dir, "../../../../.."))
     os.chdir(top)
@@ -200,7 +209,18 @@ def main():
                     return True
             return False
         projects = filter(has_test, projects)
+
+    # find build dependencies
+    projects_old = projects
+    projects = []
+    built_projects = set()
+    for project_name in projects_old:
+        get_build_deps(project_name,
+                       build_config.get_project(project_name),
+                       projects,
+                       built_projects)
     args.project = projects
+
     print "Projects", str(projects)
 
     if args.skip_build:

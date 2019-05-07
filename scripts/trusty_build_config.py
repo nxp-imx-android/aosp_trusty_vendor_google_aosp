@@ -34,6 +34,7 @@ class TrustyBuildConfigProject(object):
     Attributes:
         build: A boolean indicating if project should be built be default.
         tests: A list of commands to run to test this project.
+        also_build: Set of project to also build if building this one.
     """
 
     def __init__(self):
@@ -41,6 +42,7 @@ class TrustyBuildConfigProject(object):
            build."""
         self.build = False
         self.tests = []
+        self.also_build = {}
 
 
 class TrustyPortTestFlags(object):
@@ -148,6 +150,16 @@ class TrustyBuildConfig(object):
                 project = self.get_project(project_name)
                 project.build = bool(enabled)
 
+        def builddep(projects, needs):
+            """Process build statement in config file."""
+            for project_name in projects:
+                project = self.get_project(project_name)
+                for project_dep_name in needs:
+                    project_dep = self.get_project(project_dep_name)
+                    if self.debug:
+                        print "build", project_name, "needs", project_dep_name
+                    project.also_build[project_dep_name] = project_dep
+
         def testmap(projects, tests=()):
             """Process testmap statement in config file."""
             for project_name in projects:
@@ -216,6 +228,7 @@ class TrustyBuildConfig(object):
         file_format = {
             "include": include,
             "build": build,
+            "builddep": builddep,
             "testmap": testmap,
             "hosttest": hosttest,
             "porttest": TrustyPortTest,

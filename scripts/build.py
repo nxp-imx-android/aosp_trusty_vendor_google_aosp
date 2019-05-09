@@ -176,6 +176,8 @@ def main():
                         "matches a listed regex.")
     parser.add_argument("--verbose", action="store_true",
                         help="Verbose debug output from test(s).")
+    parser.add_argument("--debug-on-error", action="store_true",
+                        help="Wait for debugger connection if test fails.")
     parser.add_argument("--clang", action="store_true", default=None,
                         help="Build with clang.")
     parser.add_argument("--gcc", action="store_false", dest="clang",
@@ -240,7 +242,9 @@ def main():
         for project in projects:
             test_result = run_tests.run_tests(build_config, args.build_root,
                                               project, test_filter=args.test,
-                                              verbose=args.verbose)
+                                              verbose=args.verbose,
+                                              debug_on_error=
+                                              args.debug_on_error)
             if not test_result.passed:
                 test_failed.append(project)
             if test_result.passed_count:

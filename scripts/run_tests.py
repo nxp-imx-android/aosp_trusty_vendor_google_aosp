@@ -104,7 +104,8 @@ def test_should_run(testname, test_filter):
     return False
 
 
-def run_tests(build_config, root, project, test_filter=None, verbose=False):
+def run_tests(build_config, root, project, test_filter=None, verbose=False,
+              debug_on_error=False):
     """Run tests for a project.
 
     Args:
@@ -112,6 +113,8 @@ def run_tests(build_config, root, project, test_filter=None, verbose=False):
         root: Trusty build root output directory.
         project: Project name.
         test_filter: Optional list that limits the tests to run.
+        verbose: Enable debug output.
+        debug_on_error: Wait for debugger connection on errors.
 
     Returns:
         TestResults object listing overall and detailed test results.
@@ -140,7 +143,8 @@ def run_tests(build_config, root, project, test_filter=None, verbose=False):
             continue
         project_root = root + "/build-" + project + "/"
         cmd = (["nice", project_root + test.command[0]] + test.command[1:]
-               + (["--verbose"] if verbose else []))
+               + (["--verbose"] if verbose else [])
+               + (["--debug-on-error"] if debug_on_error else []))
         run_test(name=test.name, cmd=cmd)
 
     return test_results

@@ -185,6 +185,8 @@ def main():
     parser.add_argument("--skip-build", action="store_true", help="Skip build.")
     parser.add_argument("--skip-tests", action="store_true",
                         help="Skip running tests.")
+    parser.add_argument("--skip-project", action="append", default=[],
+                        help="Remove project from projects being built.")
     args = parser.parse_args()
 
     if args.archive is None:
@@ -200,6 +202,18 @@ def main():
             projects += build_config.get_projects(build=True, have_tests=True)
         else:
             projects.append(project)
+
+    # skip specific projects
+    ok = True
+    for skip in args.skip_project:
+        if skip in projects:
+            projects.remove(skip)
+        else:
+            sys.stderr.write(
+                "ERROR unknown project --skip-project={}\n".format(skip))
+            ok = False
+    if not ok:
+        sys.exit(1)
 
     if args.test:
         args.test = [re.compile(testpattern) for testpattern in args.test]

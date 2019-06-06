@@ -71,6 +71,9 @@
             "vexpress-a15-trusty",
             "imx7d",
             "pico7d",
+            "qemu-generic-arm32-test-debug",
+            "qemu-generic-arm64-test-debug",
+            "qemu-generic-arm64u32-test-debug",
             "sdb7d",
         ],
     ),
@@ -88,9 +91,6 @@
     include("../../proprietary/scripts/build-config", optional=True),
     testmap(
         projects=[
-            # The projects below are not currently build-able with only aosp
-            # files but we list them here so we can add unittests to the list
-            # and test them before they are checked in.
             "qemu-generic-arm32-test-debug",
             "qemu-generic-arm64-test-debug",
             "qemu-generic-arm64u32-test-debug",

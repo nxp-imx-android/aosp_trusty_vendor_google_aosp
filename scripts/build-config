@@ -117,6 +117,11 @@
                         command="/data/nativetest64/tipc-test/tipc-test "
                                 "-t ta2ta-ipc"),
 
+            # TIPC linux to trusty echo test
+            androidtest(name="tipc:echo",
+                        command="/data/nativetest64/tipc-test/tipc-test "
+                                "-t echo -r 100"),
+
             # Storage proxy restart test. The keymaster storage wrapper keeps a
             # persistent connection to the storage server. Test that this
             # connection gets re-established when the storage proxy restarts.

@@ -80,6 +80,12 @@ class TrustyTest(object):
         self.command = command
 
 
+class TrustyHostTest(TrustyTest):
+    """Stores a pair of a test name and a command to run on host."""
+
+    pass
+
+
 class TrustyPortTest(TrustyTest):
     """Stores a trusty port name for a test to run."""
 
@@ -171,8 +177,12 @@ class TrustyBuildConfig(object):
                 project.tests += flatten_list(tests)
 
         def hosttest(host_cmd):
-            return TrustyTest("host-test:" + host_cmd,
-                              ["host_tests/" + host_cmd])
+            return TrustyHostTest("host-test:" + host_cmd,
+                                  ["host_tests/" + host_cmd])
+
+        def hosttests(tests):
+            return [test for test in flatten_list(tests)
+                    if isinstance(test, TrustyHostTest)]
 
         def porttest_match(test, provides):
             return (isinstance(test, TrustyPortTest)
@@ -233,6 +243,7 @@ class TrustyBuildConfig(object):
             "hosttest": hosttest,
             "porttest": TrustyPortTest,
             "porttestflags": TrustyPortTestFlags,
+            "hosttests": hosttests,
             "boottests": boottests,
             "androidtest": androidtest,
             "androidporttests": androidporttests,

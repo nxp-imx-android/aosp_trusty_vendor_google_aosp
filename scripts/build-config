@@ -86,6 +86,10 @@
             hosttest("keymaster_test"),
             hosttest("mock_storage_test"),
             hosttest("storage_test"),
+            hosttests([
+                include("trusty/kernel/build-config-kerneltests"),
+                include("trusty/user/base/build-config-usertests"),
+            ]),
         ],
     ),
     include("../../proprietary/scripts/build-config", optional=True),

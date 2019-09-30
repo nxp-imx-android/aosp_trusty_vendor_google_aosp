@@ -187,12 +187,15 @@ def main():
                         help="Skip running tests.")
     parser.add_argument("--skip-project", action="append", default=[],
                         help="Remove project from projects being built.")
+    parser.add_argument("--config", type=str, help="Path to an alternate "
+                        "build-config file.")
     args = parser.parse_args()
 
     if args.archive is None:
         args.archive = os.path.join(args.build_root, "archive")
 
-    build_config = trusty_build_config.TrustyBuildConfig()
+    build_config = trusty_build_config.TrustyBuildConfig(
+        config_file=args.config)
 
     projects = []
     for project in args.project:

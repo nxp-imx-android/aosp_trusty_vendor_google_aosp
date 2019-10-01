@@ -154,7 +154,7 @@ def get_build_deps(project_name, project, project_names, already_built):
         project_names.append(project_name)
 
 
-def main():
+def main(default_config=None):
     top = os.path.abspath(os.path.join(script_dir, "../../../../.."))
     os.chdir(top)
 
@@ -188,7 +188,7 @@ def main():
     parser.add_argument("--skip-project", action="append", default=[],
                         help="Remove project from projects being built.")
     parser.add_argument("--config", type=str, help="Path to an alternate "
-                        "build-config file.")
+                        "build-config file.", default=default_config)
     args = parser.parse_args()
 
     if args.archive is None:

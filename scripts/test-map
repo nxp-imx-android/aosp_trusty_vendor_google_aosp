@@ -92,6 +92,42 @@
                 include("trusty/user/base/build-config-usertests"),
             ]),
 
+            # Trusty linux driver tests. Unbind and bind to trigger remove and
+            # probe function.
+            androidtest(name="irq-driver",
+                        command="echo 'trusty:irq' >"
+                                "/sys/bus/platform/drivers/trusty-irq/unbind"
+                                "&&"
+                                "echo 'trusty:irq' >"
+                                "/sys/bus/platform/drivers/trusty-irq/bind"),
+
+            androidtest(name="log-driver",
+                        command="echo 'trusty:log' >"
+                                "/sys/bus/platform/drivers/trusty-log/unbind"
+                                "&&"
+                                "echo 'trusty:log' >"
+                                "/sys/bus/platform/drivers/trusty-log/bind"),
+
+            androidtest(name="virtio-driver",
+                        # virtio remove currently hangs (bug: 142275662).
+                        # Disable test until fixed
+                        enabled=False,
+                        command="echo 'trusty:virtio' >"
+                                "/sys/bus/platform/drivers/trusty-virtio/unbind"
+                                "&&"
+                                "echo 'trusty:virtio' >"
+                                "/sys/bus/platform/drivers/trusty-virtio/bind"),
+
+            androidtest(name="trusty-driver",
+                        # virtio remove currently hangs (bug: 142275662).
+                        # Disable affected test until fixed
+                        enabled=False,
+                        command="echo trusty >"
+                                "/sys/bus/platform/drivers/trusty/unbind"
+                                "&&"
+                                "echo trusty >"
+                                "/sys/bus/platform/drivers/trusty/bind"),
+
             # TIPC tests
             androidtest(name="tipc:ta2ta",
                         command="/data/nativetest64/tipc-test/tipc-test "

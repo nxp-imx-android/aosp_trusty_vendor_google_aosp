@@ -104,14 +104,15 @@ def test_should_run(testname, test_filter):
     return False
 
 
-def run_tests(build_config, root, project, test_filter=None, verbose=False,
-              debug_on_error=False):
+def run_tests(build_config, root, project, run_disabled_tests=False,
+              test_filter=None, verbose=False, debug_on_error=False):
     """Run tests for a project.
 
     Args:
         build_config: TrustyBuildConfig object.
         root: Trusty build root output directory.
         project: Project name.
+        run_disabled_tests: Also run disabled tests from config file.
         test_filter: Optional list that limits the tests to run.
         verbose: Enable debug output.
         debug_on_error: Wait for debugger connection on errors.
@@ -139,6 +140,8 @@ def run_tests(build_config, root, project, test_filter=None, verbose=False,
         (test_failed if status else test_passed).append(name)
 
     for test in project_config.tests:
+        if not test.enabled and not run_disabled_tests:
+            continue
         if not test_should_run(test.name, test_filter):
             continue
         project_root = root + "/build-" + project + "/"

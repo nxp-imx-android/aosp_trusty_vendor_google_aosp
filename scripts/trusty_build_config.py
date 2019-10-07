@@ -75,9 +75,10 @@ class TrustyPortTestFlags(object):
 
 class TrustyTest(object):
     """Stores a pair of a test name and a command to run"""
-    def __init__(self, name, command):
+    def __init__(self, name, command, enabled):
         self.name = name
         self.command = command
+        self.enabled = enabled
 
 
 class TrustyHostTest(TrustyTest):
@@ -89,8 +90,8 @@ class TrustyHostTest(TrustyTest):
 class TrustyPortTest(TrustyTest):
     """Stores a trusty port name for a test to run."""
 
-    def __init__(self, port):
-        super(TrustyPortTest, self).__init__(None, None)
+    def __init__(self, port, enabled=True):
+        super(TrustyPortTest, self).__init__(None, None, enabled)
         self.port = port
         self.need = TrustyPortTestFlags()
 
@@ -176,9 +177,9 @@ class TrustyBuildConfig(object):
                 project = self.get_project(project_name)
                 project.tests += flatten_list(tests)
 
-        def hosttest(host_cmd):
+        def hosttest(host_cmd, enabled=True):
             return TrustyHostTest("host-test:" + host_cmd,
-                                  ["host_tests/" + host_cmd])
+                                  ["host_tests/" + host_cmd], enabled)
 
         def hosttests(tests):
             return [test for test in flatten_list(tests)
@@ -197,26 +198,28 @@ class TrustyBuildConfig(object):
                 provides = TrustyPortTestFlags(storage_boot=True,
                                                smp4=True)
             return [TrustyTest("boot-test:" + test.port,
-                               ["run", "--headless", "--boot-test", test.port])
+                               ["run", "--headless", "--boot-test", test.port],
+                               test.enabled)
                     for test in porttests_filter(port_tests, provides)]
 
-        def androidtest(name, command, nameprefix="", runargs=()):
+        def androidtest(name, command, enabled=True, nameprefix="", runargs=()):
             nameprefix = nameprefix + "android-test:"
             runargs = list(runargs)
             return TrustyTest(nameprefix + name,
                               ["run", "--headless",
                                "--shell-command", command
                               ] + runargs,
+                              enabled,
                              )
 
-        def androidporttest(port, cmdargs=(), **kwargs):
+        def androidporttest(port, cmdargs, enabled, **kwargs):
             cmdargs = list(cmdargs)
             cmd = " ".join(
                 [
                     "/data/nativetest64/trusty-ut-ctrl/trusty-ut-ctrl",
                     port
                 ] + cmdargs)
-            return androidtest(port, cmd, **kwargs)
+            return androidtest(port, cmd, enabled, **kwargs)
 
         def androidporttests(port_tests, provides=None, nameprefix="",
                              cmdargs=(), runargs=()):
@@ -225,8 +228,9 @@ class TrustyBuildConfig(object):
                 provides = TrustyPortTestFlags(storage_boot=True,
                                                storage_full=True,
                                                smp4=True)
-            return [androidporttest(test.port, nameprefix=nameprefix,
-                                    cmdargs=cmdargs, runargs=runargs)
+            return [androidporttest(test.port, enabled=test.enabled,
+                                    nameprefix=nameprefix, cmdargs=cmdargs,
+                                    runargs=runargs)
                     for test in porttests_filter(port_tests, provides)]
 
         def needs(tests, *args, **kwargs):

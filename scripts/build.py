@@ -185,6 +185,8 @@ def main(default_config=None):
     parser.add_argument("--skip-build", action="store_true", help="Skip build.")
     parser.add_argument("--skip-tests", action="store_true",
                         help="Skip running tests.")
+    parser.add_argument("--run-disabled-tests", action="store_true",
+                        help="Also run disabled tests.")
     parser.add_argument("--skip-project", action="append", default=[],
                         help="Remove project from projects being built.")
     parser.add_argument("--config", type=str, help="Path to an alternate "
@@ -224,6 +226,8 @@ def main(default_config=None):
             """filter function to check if a project has args.test."""
             project = build_config.get_project(project_name)
             for test in project.tests:
+                if not test.enabled and not args.run_disabled_tests:
+                    continue
                 if run_tests.test_should_run(test.name, args.test):
                     return True
             return False
@@ -258,7 +262,9 @@ def main(default_config=None):
 
         for project in projects:
             test_result = run_tests.run_tests(build_config, args.build_root,
-                                              project, test_filter=args.test,
+                                              project, run_disabled_tests=
+                                              args.run_disabled_tests,
+                                              test_filter=args.test,
                                               verbose=args.verbose,
                                               debug_on_error=
                                               args.debug_on_error)

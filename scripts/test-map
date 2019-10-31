@@ -75,7 +75,9 @@
     include("../../proprietary/scripts/build-config", optional=True),
     testmap(
         projects=[
+            "qemu-generic-arm32-gicv3-test-debug",
             "qemu-generic-arm32-test-debug",
+            "qemu-generic-arm64-gicv3-test-debug",
             "qemu-generic-arm64-test-debug",
             "qemu-generic-arm64u32-test-debug",
         ],

@@ -3,7 +3,7 @@
 set -e
 set -u
 
-DEPS=(libpixman-1-dev libstdc++-8-dev pkg-config libglib2.0-dev)
+DEPS=(libpixman-1-dev libstdc++-8-dev pkg-config libglib2.0-dev libusb-1.0-0-dev)
 
 if dpkg -V ${DEPS[@]}; then
   echo "System dependencies appear to be installed."

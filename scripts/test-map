@@ -199,8 +199,6 @@
                                 "\"-*/VerificationTokenTest.TestCreation/*:"
                                 "*/VerificationTokenTest."
                                 "MacChangesOnChangingTimestamp/*:"
-                                "*/EncryptionOperationsTest."
-                                "AesWrongPurpose/*:"
                                 "*/AttestationTest.RsaAttestation/*:"
                                 "*/AttestationTest.EcAttestation/*:"
                                 "*/AttestationTest.AttestationApplication"

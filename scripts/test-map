@@ -130,6 +130,21 @@
                                 "echo trusty >"
                                 "/sys/bus/platform/drivers/trusty/bind"),
 
+            # stdcall test with shared memory buffers.
+            # Each test run takes up to 4 arguments:
+            # <obj_size>,<obj_count=1>,<repeat_share=1>,<repeat_access=3>
+            #
+            # Test single 4K shared memory object.
+            # Test sharing 2 4K objects 100 times without accessing it.
+            # Test 10 4K shared memory objects, shared 10 times, each accessed
+            # 10 times.
+            androidtest(name="stdcalltest",
+                        command="echo '0x1000 "
+                                "0x1000,2,100,0 "
+                                "0x1000,10,10,10' >"
+                                "'/sys/devices/platform/trusty/"
+                                "trusty:test/trusty_test_run'"),
+
             # TIPC tests
             androidtest(name="tipc:ta2ta",
                         command="/data/nativetest64/tipc-test/tipc-test "

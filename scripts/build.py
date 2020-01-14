@@ -88,7 +88,14 @@ def archive_build_file(args, project, src, dest=None, optional=False):
     if not dest:
         dest = src
     src = os.path.join(args.build_root, "build-" + project, src)
-    dest = os.path.join(args.archive, project + "-" + args.buildid + "." + dest)
+    # dest must be a fixed path for repeated builds of the same artifact
+    # for compatibility with prebuilt update scripts.
+    # Project is fine because that specifies what artifact is being looked
+    # for - LK for a specific target.
+    # BUILD_ID or feature selections that may change are not, because the
+    # prebuilt update script cannot predict the path at which the artifact
+    # will live.
+    dest = os.path.join(args.archive, project + "." + dest)
     copy_file(src, dest, optional=optional)
 
 

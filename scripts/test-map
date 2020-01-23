@@ -135,12 +135,16 @@
             # <obj_size>,<obj_count=1>,<repeat_share=1>,<repeat_access=3>
             #
             # Test single 4K shared memory object.
-            # Test sharing 2 4K objects 100 times without accessing it.
+            # Test 10 8MB objects, shared twice, each accessed twice. (8MB non-
+            # contiguous object is large enough to need several 4KB messages to
+            # describe)
+            # Test sharing 2 8MB objects 100 times without accessing it.
             # Test 10 4K shared memory objects, shared 10 times, each accessed
             # 10 times.
             androidtest(name="stdcalltest",
                         command="echo '0x1000 "
-                                "0x1000,2,100,0 "
+                                "0x800000,10,2,2 "
+                                "0x800000,2,100,0 "
                                 "0x1000,10,10,10' >"
                                 "'/sys/devices/platform/trusty/"
                                 "trusty:test/trusty_test_run'"),

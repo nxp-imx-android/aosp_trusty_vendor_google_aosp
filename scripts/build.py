@@ -17,6 +17,7 @@
 """Invoke trusty build system and run tests."""
 
 import argparse
+import getpass
 import multiprocessing
 import os
 import re
@@ -42,7 +43,9 @@ def get_new_build_id(build_root):
         f.write(str(num))
         f.truncate()
         # Return buildid string: <user>@<hostname>-<num>
-        return os.getlogin() + "@" + os.uname()[1] + "-" + str(num)
+        # Use getpass.getuser() to avoid non-portability/failure of
+        # os.getlogin()
+        return getpass.getuser() + "@" + os.uname()[1] + "-" + str(num)
 
 
 def mkdir(path):

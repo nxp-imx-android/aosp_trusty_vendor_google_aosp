@@ -75,6 +75,7 @@
             "qemu-generic-arm32-test-debug",
             "qemu-generic-arm64-gicv3-test-debug",
             "qemu-generic-arm64-test-debug",
+            "qemu-generic-arm64l32-test-debug",
             "qemu-generic-arm64u32-test-debug",
             "sdb7d",
         ],

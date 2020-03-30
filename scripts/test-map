@@ -217,7 +217,8 @@
                                 "*/AttestationTest.RsaAttestation/*:"
                                 "*/AttestationTest.EcAttestation/*:"
                                 "*/AttestationTest.AttestationApplication"
-                                "IDLengthProperlyEncoded/*\""),
+                                "IDLengthProperlyEncoded/*\"",
+                        timeout=(60 * 20)),
         ],
     ),
 ]

@@ -90,10 +90,11 @@ class TrustyHostTest(TrustyTest):
 class TrustyPortTest(TrustyTest):
     """Stores a trusty port name for a test to run."""
 
-    def __init__(self, port, enabled=True):
+    def __init__(self, port, enabled=True, timeout=None):
         super(TrustyPortTest, self).__init__(None, None, enabled)
         self.port = port
         self.need = TrustyPortTestFlags()
+        self.timeout = timeout
 
     def needs(self, **need):
         self.need.set(**need)
@@ -197,18 +198,31 @@ class TrustyBuildConfig(object):
             if provides is None:
                 provides = TrustyPortTestFlags(storage_boot=True,
                                                smp4=True)
-            return [TrustyTest("boot-test:" + test.port,
-                               ["run", "--headless", "--boot-test", test.port],
-                               test.enabled)
-                    for test in porttests_filter(port_tests, provides)]
+            trusty_tests = []
+            for test in porttests_filter(port_tests, provides):
+                if test.timeout:
+                    timeout_args = ['--timeout', str(test.timeout)]
+                else:
+                    timeout_args = []
 
-        def androidtest(name, command, enabled=True, nameprefix="", runargs=()):
+                trusty_tests += [TrustyTest("boot-test:" + test.port,
+                                            ["run", "--headless", "--boot-test",
+                                             test.port] + timeout_args,
+                                            test.enabled)]
+            return trusty_tests
+
+        def androidtest(name, command, enabled=True, nameprefix="", runargs=(),
+                        timeout=None):
             nameprefix = nameprefix + "android-test:"
+            if timeout:
+                timeout_args = ['--timeout', str(timeout)]
+            else:
+                timeout_args = []
             runargs = list(runargs)
             return TrustyTest(nameprefix + name,
                               ["run", "--headless",
                                "--shell-command", command
-                              ] + runargs,
+                              ] + timeout_args + runargs,
                               enabled,
                              )
 

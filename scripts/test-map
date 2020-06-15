@@ -159,6 +159,11 @@
                         command="/data/nativetest64/vendor/tipc-test/tipc-test "
                                 "-t echo -r 100"),
 
+            # NS shares NS memory with S
+            androidtest(name="tipc:send-fd",
+                        command="/data/nativetest64/vendor/tipc-test/tipc-test "
+                                "-t send-fd"),
+
             # Storage proxy restart test. The keymaster storage wrapper keeps a
             # persistent connection to the storage server. Test that this
             # connection gets re-established when the storage proxy restarts.

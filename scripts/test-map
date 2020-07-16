@@ -197,15 +197,14 @@
             # are too flaky to have on in presubmit.
             #
             # If we test on real devices, these tests should be *on*.
-	    #
-	    # EncryptionOperationsTest.AesWrongPurpose is tempoarily excluded
-	    # from testing due to pending modification on vts:keymaster@4.0.
-	    # http://b/146940505
-	    #
-	    # AttestationTest.RsaAttestation, AttestationTest.EcAttestation,
-	    # and AttestationTest.AttestationApplicationIDLengthProperlyEncoded
-	    # are excluded from testing,
-	    # since attestation is not set on the emulator.
+            #
+            # ClearOperationsTest.TooManyOperations is excluded from testing
+            # because KM4 VTS leaks operation slots on Trusty (b/146083990).
+            #
+            # AttestationTest.RsaAttestation, AttestationTest.EcAttestation, and
+            # AttestationTest.AttestationApplicationIDLengthProperlyEncoded are
+            # excluded from testing, since attestation is not set on the
+            # emulator.
             androidtest(name="vts:keymaster@4.0",
                         command="/data/nativetest64/"
                                 "VtsHalKeymasterV4_0TargetTest/"
@@ -214,6 +213,7 @@
                                 "\"-*/VerificationTokenTest.TestCreation/*:"
                                 "*/VerificationTokenTest."
                                 "MacChangesOnChangingTimestamp/*:"
+                                "*/ClearOperationsTest.TooManyOperations/*:"
                                 "*/AttestationTest.RsaAttestation/*:"
                                 "*/AttestationTest.EcAttestation/*:"
                                 "*/AttestationTest.AttestationApplication"

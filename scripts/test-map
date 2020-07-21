@@ -147,19 +147,19 @@
 
             # TIPC tests
             androidtest(name="tipc:ta2ta",
-                        command="/data/nativetest64/tipc-test/tipc-test "
+                        command="/data/nativetest64/vendor/tipc-test/tipc-test "
                                 "-t ta2ta-ipc"),
 
             # TIPC linux to trusty echo test
             androidtest(name="tipc:echo",
-                        command="/data/nativetest64/tipc-test/tipc-test "
+                        command="/data/nativetest64/vendor/tipc-test/tipc-test "
                                 "-t echo -r 100"),
 
             # Storage proxy restart test. The keymaster storage wrapper keeps a
             # persistent connection to the storage server. Test that this
             # connection gets re-established when the storage proxy restarts.
             androidtest(name="storage-proxy-restart",
-                        command="/data/nativetest64/trusty-ut-ctrl/"
+                        command="/data/nativetest64/vendor/trusty-ut-ctrl/"
                                 "trusty-ut-ctrl "
                                 "com.android.keymaster-unittest"
                                 "&&"
@@ -172,14 +172,14 @@
                                 "&&"
                                 "start storageproxyd"
                                 "&"
-                                "/data/nativetest64/trusty-ut-ctrl/"
+                                "/data/nativetest64/vendor/trusty-ut-ctrl/"
                                 "trusty-ut-ctrl "
                                 "com.android.keymaster-unittest"
                                 "&&"
                                 "wait"
                                 ")"
                                 "&&"
-                                "/data/nativetest64/trusty-ut-ctrl/"
+                                "/data/nativetest64/vendor/trusty-ut-ctrl/"
                                 "trusty-ut-ctrl "
                                 "com.android.keymaster-unittest"),
 

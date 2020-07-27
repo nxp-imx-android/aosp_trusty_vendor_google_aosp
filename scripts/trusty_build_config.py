@@ -383,7 +383,7 @@ def has_unit(tests):
 def test_config(args):
     """Test config file parser.
 
-    Uses a dummy config file where all projects have names that describe if they
+    Uses a test config file where all projects have names that describe if they
     should be built and if they have tests.
 
     Args:

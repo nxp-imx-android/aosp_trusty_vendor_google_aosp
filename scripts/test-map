@@ -192,6 +192,26 @@
                                 "trusty-ut-ctrl "
                                 "com.android.keymaster-unittest"),
 
+            # Test keymaster attestation key provisioning
+            androidtest(name="keymaster-set-attestation-keys",
+                        command="/vendor/bin/"
+                                "trusty_keymaster_set_attestation_key "
+                                "/vendor/etc/"
+                                "keymaster_soft_attestation_keys.xml"),
+
+            # Test keymaster attestation
+            androidtest(name="vts:keymaster-attestation@4.0",
+                        command="setprop ro.boot.verifiedbootstate fake"
+                                "&&"
+                                "/data/nativetest64/"
+                                "VtsHalKeymasterV4_0TargetTest/"
+                                "VtsHalKeymasterV4_0TargetTest"
+                                " --gtest_filter=\""
+                                "*/AttestationTest.RsaAttestation/*:"
+                                "*/AttestationTest.EcAttestation/*:"
+                                "*/AttestationTest.AttestationApplication"
+                                "IDLengthProperlyEncoded/*"
+                                "\""),
             # VTS
             androidtest(name="vts:gatekeeper@1.0",
                         command="/data/nativetest64/"

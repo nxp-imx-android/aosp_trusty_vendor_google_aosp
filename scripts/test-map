@@ -130,6 +130,19 @@
                                 "echo trusty >"
                                 "/sys/bus/platform/drivers/trusty/bind"),
 
+            # test that trusty driver started and got a version string
+            androidtest(name="trusty-driver-version",
+                        command="TRUSTY_VERSION=$(cat /sys/bus/platform/"
+                                "devices/trusty/trusty_version)"
+                                "&&"
+                                "echo Trusty version: ${TRUSTY_VERSION}"
+                                "&&"
+                                "if [[ \"${TRUSTY_VERSION}\" != \"Build:\"* ]];"
+                                "then "
+                                "echo Unexpected trusty version string;"
+                                "exit 1;"
+                                "fi"),
+
             # stdcall test with shared memory buffers.
             # Each test run takes up to 4 arguments:
             # <obj_size>,<obj_count=1>,<repeat_share=1>,<repeat_access=3>

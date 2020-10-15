@@ -32,6 +32,13 @@ import trusty_build_config
 
 script_dir = os.path.dirname(os.path.abspath(__file__))
 
+SDK_README_PATH = "trusty/user/base/sdk/README.md"
+DEV_SIGNING_KEY_PATH = "trusty/device/arm/generic-arm64/project/keys/"
+DEV_SIGNING_KEY_FILES = [
+    "apploader_sign_test_private_key_0.der",
+    "apploader_sign_test_public_key_0.der"
+]
+
 
 def get_new_build_id(build_root):
     """Increment build-id file and return new build-id number."""
@@ -102,6 +109,73 @@ def archive_build_file(args, project, src, dest=None, optional=False):
     # will live.
     dest = os.path.join(args.archive, project + "." + dest)
     copy_file(src, dest, optional=optional)
+
+
+def archive_dir(archive, src, dest):
+    """Recursively add a directory to a ZIP file.
+
+    Recursively add the src directory to the ZIP with dest path inside the
+    archive.
+
+    Args:
+       archive: A ZipFile opened for append or write.
+       src: Source directory to add to the archive.
+       dest: Destination path inside the archive (must be a relative path).
+    """
+    for root, dirs, files in os.walk(src):
+        for f in files:
+            file_path = os.path.join(root, f)
+            archive_dest = os.path.join(dest, os.path.relpath(file_path, start=src))
+            archive.write(file_path, archive_dest)
+
+def archive_file(archive, src_file, dest_dir=""):
+    """Add a file to a ZIP file.
+
+    Adds src_file to archive in the directory dest_dir, relative to the root of
+    the archive.
+
+    Args:
+       archive: A ZipFile opened for append or write.
+       src_file: Source file to add to the archive.
+       dest_dir: Relative destination path in the archive for this file.
+    """
+    archive.write(src_file, os.path.join(dest_dir, os.path.basename(src_file)))
+
+
+def assemble_sdk(args):
+    """Assemble Trusty SDK archive"""
+    mkdir(args.archive)
+
+    sdk_name = "trusty_sdk-" + args.buildid
+    tools_dest = os.path.join(sdk_name, "tools")
+    filename = os.path.join(args.archive, sdk_name + ".zip")
+    with ZipFile(filename, 'a', compression=ZIP_DEFLATED) as sdk_archive:
+        print("Building SDK archive ZIP...")
+        for project in args.project:
+            project_buildroot = os.path.join(args.build_root, "build-" + project)
+
+            project_sysroot_dir = os.path.join(sdk_name, "sysroots", project, "usr")
+            src = os.path.join(project_buildroot, "sdk", "sysroot", "usr")
+            archive_dir(sdk_archive, src, project_sysroot_dir)
+
+            src = os.path.join(project_buildroot, "host_tools", "apploader_package_tool")
+            archive_file(sdk_archive, src, tools_dest)
+
+            src = os.path.join(project_buildroot, "sdk", "tools", "manifest_compiler.py")
+            archive_file(sdk_archive, src, tools_dest)
+
+        # Add AOSP qemu dev signing key.
+        for filename in DEV_SIGNING_KEY_FILES:
+            archive_file(sdk_archive, os.path.join(DEV_SIGNING_KEY_PATH, filename), tools_dest)
+
+        # Copy SDK README
+        archive_file(sdk_archive, SDK_README_PATH, sdk_name)
+
+        # Add clang prebuilt toolchain
+        dest = os.path.join(sdk_name, "toolchain", "clang")
+        cmd = f"source {os.path.join(script_dir, 'envsetup.sh')} && echo $CLANG_BINDIR"
+        clang_bindir = subprocess.check_output(cmd, shell=True, executable="/bin/bash").decode().strip()
+        archive_dir(sdk_archive, os.path.join(clang_bindir, ".."), dest)
 
 
 def build(args):
@@ -280,6 +354,8 @@ def main(default_config=None):
                         "build-config file.", default=default_config)
     parser.add_argument("--android", type=str,
                         help="Path to an Android build to run tests against.")
+    parser.add_argument("--sdk", action="store_true", help="Build SDK for all "
+                        "specified projects.")
     args = parser.parse_args()
 
     if args.archive is None:
@@ -341,6 +417,9 @@ def main(default_config=None):
     else:
         build(args)
         archive(build_config, args)
+
+    if args.sdk:
+        assemble_sdk(args)
 
     # Run tests
     if not args.skip_tests:

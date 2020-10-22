@@ -143,6 +143,15 @@ def build(args):
         archive_build_file(args, project, "monitor/monitor.bin", "monitor.bin",
                            optional=True)
 
+        # copy out trusty.padded if it exists
+        archive_build_file(args, project, "trusty.padded", optional=True)
+
+        # copy out trusty.signed if it exists
+        archive_build_file(args, project, "trusty.signed", optional=True)
+
+        # copy out trusty_usb.signed if it exists
+        archive_build_file(args, project, "trusty_usb.signed", optional=True)
+
         # copy out lk image
         archive_build_file(args, project, "lk.bin")
 

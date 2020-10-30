@@ -203,8 +203,6 @@ def main(default_config=None):
                         help="Wait for debugger connection if test fails.")
     parser.add_argument("--clang", action="store_true", default=None,
                         help="Build with clang.")
-    parser.add_argument("--gcc", action="store_false", dest="clang",
-                        help="Build with GCC.")
     parser.add_argument("--skip-build", action="store_true", help="Skip build.")
     parser.add_argument("--skip-tests", action="store_true",
                         help="Skip running tests.")

@@ -158,6 +158,9 @@ def assemble_sdk(args):
             src = os.path.join(project_buildroot, "sdk", "sysroot", "usr")
             archive_dir(sdk_archive, src, project_sysroot_dir)
 
+            src = os.path.join(project_buildroot, "sdk", "LICENSE")
+            archive_file(sdk_archive, src, sdk_name)
+
             src = os.path.join(project_buildroot, "host_tools", "apploader_package_tool")
             archive_file(sdk_archive, src, tools_dest)
 

@@ -155,6 +155,9 @@ def build(args):
         # copy out lk image
         archive_build_file(args, project, "lk.bin")
 
+        # copy out qemu package if it exists
+        archive_build_file(args, project, "trusty_qemu_package.zip", optional=True)
+
         # collect and save all .lst
         subprocess.call("cd " +
                         os.path.join(args.build_root, "build-" + project) +

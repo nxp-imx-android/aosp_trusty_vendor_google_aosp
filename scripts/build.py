@@ -213,13 +213,15 @@ def main(default_config=None):
                         help="Remove project from projects being built.")
     parser.add_argument("--config", type=str, help="Path to an alternate "
                         "build-config file.", default=default_config)
+    parser.add_argument("--android", type=str,
+                        help="Path to an Android build to run tests against.")
     args = parser.parse_args()
 
     if args.archive is None:
         args.archive = os.path.join(args.build_root, "archive")
 
     build_config = trusty_build_config.TrustyBuildConfig(
-        config_file=args.config)
+        config_file=args.config, android=args.android)
 
     projects = []
     for project in args.project:

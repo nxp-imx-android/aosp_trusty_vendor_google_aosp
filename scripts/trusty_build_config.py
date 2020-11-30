@@ -104,7 +104,7 @@ class TrustyPortTest(TrustyTest):
 class TrustyBuildConfig(object):
     """Trusty build and test configuration file parser."""
 
-    def __init__(self, config_file=None, debug=False):
+    def __init__(self, config_file=None, debug=False, android=None):
         """Inits TrustyBuildConfig.
 
         Args:
@@ -113,6 +113,7 @@ class TrustyBuildConfig(object):
             debug: Optional boolean value. Set to True to enable debug messages.
         """
         self.debug = debug
+        self.android = android
         self.projects = {}
         if config_file is None:
             config_file = os.path.join(script_dir, "build-config")
@@ -218,11 +219,15 @@ class TrustyBuildConfig(object):
                 timeout_args = ['--timeout', str(timeout)]
             else:
                 timeout_args = []
+            if self.android:
+                android_args = ['--android', self.android]
+            else:
+                android_args = []
             runargs = list(runargs)
             return TrustyTest(nameprefix + name,
                               ["run", "--headless",
                                "--shell-command", command
-                              ] + timeout_args + runargs,
+                              ] + timeout_args + android_args + runargs,
                               enabled,
                              )
 

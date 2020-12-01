@@ -182,8 +182,7 @@
             # persistent connection to the storage server. Test that this
             # connection gets re-established when the storage proxy restarts.
             androidtest(name="storage-proxy-restart",
-                        command="/data/nativetest64/vendor/trusty-ut-ctrl/"
-                                "trusty-ut-ctrl "
+                        command="/vendor/bin/trusty-ut-ctrl "
                                 "com.android.keymaster-unittest"
                                 "&&"
                                 "stop storageproxyd"
@@ -195,15 +194,13 @@
                                 "&&"
                                 "start storageproxyd"
                                 "&"
-                                "/data/nativetest64/vendor/trusty-ut-ctrl/"
-                                "trusty-ut-ctrl "
+                                "/vendor/bin/trusty-ut-ctrl "
                                 "com.android.keymaster-unittest"
                                 "&&"
                                 "wait"
                                 ")"
                                 "&&"
-                                "/data/nativetest64/vendor/trusty-ut-ctrl/"
-                                "trusty-ut-ctrl "
+                                "/vendor/bin/trusty-ut-ctrl "
                                 "com.android.keymaster-unittest"),
 
             # Test keymaster attestation key provisioning

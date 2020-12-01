@@ -235,7 +235,7 @@ class TrustyBuildConfig(object):
             cmdargs = list(cmdargs)
             cmd = " ".join(
                 [
-                    "/data/nativetest64/vendor/trusty-ut-ctrl/trusty-ut-ctrl",
+                    "/vendor/bin/trusty-ut-ctrl",
                     port
                 ] + cmdargs)
             return androidtest(port, cmd, enabled, **kwargs)

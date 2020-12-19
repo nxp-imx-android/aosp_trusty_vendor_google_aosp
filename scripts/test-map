@@ -262,7 +262,7 @@
                                 "*/AttestationTest.EcAttestation/*:"
                                 "*/AttestationTest.AttestationApplication"
                                 "IDLengthProperlyEncoded/*\"",
-                        timeout=(60 * 40)),
+                        timeout=(60 * 60)),
         ],
     ),
 ]

@@ -224,6 +224,10 @@
                                 "IDLengthProperlyEncoded/*"
                                 "\""),
             # VTS
+            androidtest(name="vts:confirmationui@1.0",
+                        command="/data/nativetest64/"
+                                "VtsHalConfirmationUIV1_0TargetTest/"
+                                "VtsHalConfirmationUIV1_0TargetTest"),
             androidtest(name="vts:gatekeeper@1.0",
                         command="/data/nativetest64/"
                                 "VtsHalGatekeeperV1_0TargetTest/"

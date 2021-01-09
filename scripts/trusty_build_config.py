@@ -49,6 +49,7 @@ class TrustyPortTestFlags(object):
     """Stores need flags for a test or provide flags for a test environment."""
 
     ALLOWED_FLAGS = set([
+        "android",
         "storage_boot",
         "storage_full",
         "smp4",
@@ -244,7 +245,8 @@ class TrustyBuildConfig(object):
                              cmdargs=(), runargs=()):
             nameprefix = nameprefix + "android-port-test:"
             if provides is None:
-                provides = TrustyPortTestFlags(storage_boot=True,
+                provides = TrustyPortTestFlags(android=True,
+                                               storage_boot=True,
                                                storage_full=True,
                                                smp4=True)
             return [androidporttest(test.port, enabled=test.enabled,

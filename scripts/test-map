@@ -144,6 +144,15 @@
                                 "exit 1;"
                                 "fi"),
 
+            androidtest(name="untainted-linux",
+                        command="TAINTED=$(cat /proc/sys/kernel/tainted)"
+                                "&&"
+                                "if [[ \"${TAINTED}\" != \"0\" ]];"
+                                "then "
+                                "echo Linux kernel tainted ${TAINTED};"
+                                "exit 1;"
+                                "fi"),
+
             # stdcall test with shared memory buffers.
             # Each test run takes up to 4 arguments:
             # <obj_size>,<obj_count=1>,<repeat_share=1>,<repeat_access=3>

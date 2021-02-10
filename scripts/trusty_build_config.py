@@ -74,6 +74,14 @@ class TrustyPortTestFlags(object):
         return self.flags.issubset(provide.flags)
 
 
+class TrustyArchiveBuildFile(object):
+    """Copy a file to archive directory after a build."""
+    def __init__(self, src, dest, optional):
+        self.src = src
+        self.dest = dest
+        self.optional  = optional
+
+
 class TrustyTest(object):
     """Stores a pair of a test name and a command to run"""
     def __init__(self, name, command, enabled):
@@ -116,6 +124,7 @@ class TrustyBuildConfig(object):
         self.debug = debug
         self.android = android
         self.projects = {}
+        self.dist = []
         if config_file is None:
             config_file = os.path.join(script_dir, "build-config")
         self.read_config_file(config_file)
@@ -152,13 +161,17 @@ class TrustyBuildConfig(object):
                 path = os.path.join(config_dir, path)
             return self.read_config_file(path=path, optional=optional)
 
-        def build(projects, enabled=True):
+        def build(projects, enabled=True, dist=None):
             """Process build statement in config file."""
             for project_name in projects:
                 if self.debug:
                     print "build", project_name, "enabled", enabled
                 project = self.get_project(project_name)
                 project.build = bool(enabled)
+            if dist:
+                for item in dist:
+                    assert isinstance(item, TrustyArchiveBuildFile), item
+                    self.dist.append(item)
 
         def builddep(projects, needs):
             """Process build statement in config file."""
@@ -169,6 +182,9 @@ class TrustyBuildConfig(object):
                     if self.debug:
                         print "build", project_name, "needs", project_dep_name
                     project.also_build[project_dep_name] = project_dep
+
+        def archive(src, dest=None, optional=False):
+            return TrustyArchiveBuildFile(src, dest, optional)
 
         def testmap(projects, tests=()):
             """Process testmap statement in config file."""
@@ -264,6 +280,7 @@ class TrustyBuildConfig(object):
             "include": include,
             "build": build,
             "builddep": builddep,
+            "archive": archive,
             "testmap": testmap,
             "hosttest": hosttest,
             "porttest": TrustyPortTest,

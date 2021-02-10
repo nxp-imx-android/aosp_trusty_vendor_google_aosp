@@ -134,8 +134,14 @@ def build(args):
         print str(failed)
         exit(1)
 
+def archive(build_config, args):
     # Copy the files we care about to the archive directory
     for project in args.project:
+        # config-driven archiving
+        for item in build_config.dist:
+            archive_build_file(args, project, item.src, item.dest,
+                               optional=item.optional)
+
         # copy out tos.img if it exists
         archive_build_file(args, project, "tos.img", optional=True)
 
@@ -274,6 +280,7 @@ def main(default_config=None):
         print "Skip build for", args.project
     else:
         build(args)
+        archive(build_config, args)
 
     # Run tests
     if not args.skip_tests:

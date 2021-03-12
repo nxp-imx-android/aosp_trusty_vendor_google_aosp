@@ -237,6 +237,26 @@
                                 "*/AttestationTest.AttestationApplication"
                                 "IDLengthProperlyEncoded/*"
                                 "\""),
+
+            # Test keymaster wrapped attestation key provisioning
+            androidtest(name="keymaster-wrapped-vts",
+                        command="/vendor/bin/"
+                                "trusty_keymaster_set_attestation_key "
+                                "/vendor/etc/"
+                                "keymaster_soft_wrapped_attestation_keys.xml"
+                                "&&"
+                                "setprop ro.boot.verifiedbootstate fake"
+                                "&&"
+                                "/data/nativetest64/"
+                                "VtsHalKeymasterV4_0TargetTest/"
+                                "VtsHalKeymasterV4_0TargetTest"
+                                " --gtest_filter=\""
+                                "*/AttestationTest.RsaAttestation/*:"
+                                "*/AttestationTest.EcAttestation/*:"
+                                "*/AttestationTest.AttestationApplication"
+                                "IDLengthProperlyEncoded/*"
+                                "\""),
+
             # VTS
             androidtest(name="vts:confirmationui@1.0",
                         command="/data/nativetest64/"

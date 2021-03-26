@@ -138,7 +138,7 @@
                                 "&&"
                                 "echo Trusty version: ${TRUSTY_VERSION}"
                                 "&&"
-                                "if [[ \"${TRUSTY_VERSION}\" != \"Build:\"* ]];"
+                                "if [[ \"${TRUSTY_VERSION}\" != \"Project:\"* ]];"
                                 "then "
                                 "echo Unexpected trusty version string;"
                                 "exit 1;"

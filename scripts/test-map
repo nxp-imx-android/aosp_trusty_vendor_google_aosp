@@ -217,6 +217,108 @@
                                 "/vendor/bin/trusty-ut-ctrl "
                                 "com.android.keymaster-unittest"),
 
+            # Test automatic clearing of tp filesystem when userdata is cleared
+            # - Stage 1
+            # -- Simulate user-data wipe (by removing data/vendor/ss/0 and
+            #    restarting storageproxyd)
+            # -- Create a valid filesystem (with both superblocks written)
+            #
+            # - Stage 2
+            # -- Simulate user-data wipe
+            # -- Create a valid filesystem (with a single committed superblock)
+            # -- Simulate reboot (by restarting storageproxyd)
+            # -- Check that filesystem is accessible (with a small uncommitted
+            #    transaction to more avoid super block updates)
+            #
+            #    If only one super block was written, it could have used the
+            #    wrong version. If the new filesystem always writes superblock
+            #    version 1, then it will fail if the old version was 2 or 3 as
+            #    those two starting points have version 2 in the first
+            #    superblock. Stage one will leave the filesystem at version 2 if
+            #    b/190109878 has not been fixed or at version 3 if it has been
+            #    partially fixed.
+            #
+            # - Stage 3
+            # -- Simulate user-data wipe
+            # -- Write to the filesystem without commiting anything
+            # -- Simulate reboot (Should trigger cleanup path for b/190109878
+            #    bugfix as generated initial superblock is not needed)
+            #
+            # - Stage 4
+            # -- Write a large transaction to the filesystem without commiting
+            #    anything
+            # -- Simulate reboot
+            # -- Check that filesystem is accessible. If superblock was not
+            #    written (b/190109878) this step would fail as the data file is
+            #    no longer empty, but the old super blocks refer to data in the
+            #    previous deleted file.
+            # -- Trigger cleanup in test app.
+            androidtest(name="storage-tp-clear-test",
+                        command="function storage-unittest { "
+                                "/vendor/bin/trusty-ut-ctrl "
+                                "com.android.storage-unittest.$1"
+                                ";}"
+                                "&&"
+                                "function stop-storageproxyd { "
+                                "stop storageproxyd"
+                                "&&"
+                                "killall storageproxyd"
+                                ";}"
+                                "&&"
+                                "function wipe-restart-storageproxyd { "
+                                "echo '[ -------- ] wipe-restart-storageproxyd'"
+                                "&&"
+                                "stop-storageproxyd"
+                                "&&"
+                                "rm /data/vendor/ss/0"
+                                "&&"
+                                "start storageproxyd"
+                                ";}"
+                                "&&"
+                                "function restart-storageproxyd { "
+                                "echo '[ -------- ] restart-storageproxyd'"
+                                "&&"
+                                "stop-storageproxyd"
+                                "&&"
+                                "start storageproxyd"
+                                ";}"
+                                "&&"
+                                "echo '[ -------- ] Stage 1 - 2 commit setup'"
+                                "&&"
+                                "wipe-restart-storageproxyd"
+                                "&&"
+                                "storage-unittest td.init"
+                                "&&"
+                                "storage-unittest td.init"
+                                "&&"
+                                "echo '[ -------- ] Stage 2 - 1 commit setup'"
+                                "&&"
+                                "wipe-restart-storageproxyd"
+                                "&&"
+                                "storage-unittest td.init"
+                                "&&"
+                                "restart-storageproxyd"
+                                "&&"
+                                "storage-unittest td.initnocommitsmall"
+                                "&&"
+                                "echo '[ -------- ] Stage 3 - no commit small'"
+                                "&&"
+                                "wipe-restart-storageproxyd"
+                                "&&"
+                                "storage-unittest td.initnocommitsmall"
+                                "&&"
+                                "restart-storageproxyd"
+                                "&&"
+                                "echo '[ -------- ] Stage 4 - no commit large'"
+                                "&&"
+                                "storage-unittest td.initnocommitlarge"
+                                "&&"
+                                "restart-storageproxyd"
+                                "&&"
+                                "storage-unittest td.initnocommitsmall"
+                                "&&"
+                                "storage-unittest td.initnocommitcleanup"),
+
             # Test keymaster attestation key provisioning
             androidtest(name="keymaster-set-attestation-keys",
                         command="/vendor/bin/"

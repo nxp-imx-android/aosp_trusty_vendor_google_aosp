@@ -399,6 +399,11 @@
                                 "*/AttestationTest.AttestationApplication"
                                 "IDLengthProperlyEncoded/*\"",
                         timeout=(60 * 60)),
+            # Metrics test
+            androidtest(name="trusty-metrics",
+                        command="/data/nativetest64/vendor/"
+                                "libtrusty_metrics_test/"
+                                "libtrusty_metrics_test"),
         ],
     ),
 ]

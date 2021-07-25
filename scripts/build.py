@@ -164,6 +164,9 @@ def archive(build_config, args):
         # copy out qemu package if it exists
         archive_build_file(args, project, "trusty_qemu_package.zip", optional=True)
 
+        # copy out test package if it exists
+        archive_build_file(args, project, "trusty_test_package.zip", optional=True)
+
         # collect and save all .lst
         subprocess.call("cd " +
                         os.path.join(args.build_root, "build-" + project) +

@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python3
 #
 # Copyright (C) 2018 The Android Open Source Project
 #
@@ -70,7 +70,7 @@ def copy_file(src, dest, optional=False):
     """
     if not os.path.exists(src) and optional:
         return
-    print "Copy:", repr(src), "->", repr(dest)
+    print("Copy:", repr(src), "->", repr(dest))
     shutil.copy(src, dest)
 
 
@@ -109,7 +109,7 @@ def build(args):
 
     if args.buildid is None:
         args.buildid = get_new_build_id(args.build_root)
-    print "BuildID", args.buildid
+    print("BuildID", args.buildid)
 
     # build projects
     failed = []
@@ -124,14 +124,14 @@ def build(args):
         cmd = "source %s && (%s)" % (os.path.join(script_dir, "envsetup.sh"),
                                      cmd)
         status = subprocess.call(cmd, shell=True, executable="/bin/bash")
-        print "cmd: '" + cmd + "' returned", status
+        print("cmd: '" + cmd + "' returned", status)
         if status:
             failed.append(project)
 
     if failed:
-        print
-        print "some projects have failed to build:"
-        print str(failed)
+        print()
+        print("some projects have failed to build:")
+        print(str(failed))
         exit(1)
 
 def archive(build_config, args):
@@ -277,10 +277,10 @@ def main(default_config=None):
                        built_projects)
     args.project = projects
 
-    print "Projects", str(projects)
+    print("Projects", str(projects))
 
     if args.skip_build:
-        print "Skip build for", args.project
+        print("Skip build for", args.project)
     else:
         build(args)
         archive(build_config, args)

@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python3
 #
 # Copyright (C) 2018 The Android Open Source Project
 #
@@ -133,11 +133,11 @@ class TrustyBuildConfig(object):
         """Main parser function called constructor or recursively by itself."""
         if optional and not os.path.exists(path):
             if self.debug:
-                print "Skipping optional config file:", path
+                print("Skipping optional config file:", path)
             return
 
         if self.debug:
-            print "Reading config file:", path
+            print("Reading config file:", path)
 
         config_dir = os.path.dirname(path)
 
@@ -156,7 +156,7 @@ class TrustyBuildConfig(object):
         def include(path, optional=False):
             """Process include statement in config file."""
             if self.debug:
-                print "include", path, "optional", optional
+                print("include", path, "optional", optional)
             if path.startswith("."):
                 path = os.path.join(config_dir, path)
             return self.read_config_file(path=path, optional=optional)
@@ -165,7 +165,7 @@ class TrustyBuildConfig(object):
             """Process build statement in config file."""
             for project_name in projects:
                 if self.debug:
-                    print "build", project_name, "enabled", enabled
+                    print("build", project_name, "enabled", enabled)
                 project = self.get_project(project_name)
                 project.build = bool(enabled)
             if dist:
@@ -180,7 +180,7 @@ class TrustyBuildConfig(object):
                 for project_dep_name in needs:
                     project_dep = self.get_project(project_dep_name)
                     if self.debug:
-                        print "build", project_name, "needs", project_dep_name
+                        print("build", project_name, "needs", project_dep_name)
                     project.also_build[project_dep_name] = project_dep
 
         def archive(src, dest=None, optional=False):
@@ -190,9 +190,9 @@ class TrustyBuildConfig(object):
             """Process testmap statement in config file."""
             for project_name in projects:
                 if self.debug:
-                    print "testmap", project_name, "build", build
+                    print("testmap", project_name, "build", build)
                     for test in tests:
-                        print test
+                        print(test)
                 project = self.get_project(project_name)
                 project.tests += flatten_list(tests)
 
@@ -337,33 +337,33 @@ def list_projects(args):
     """
     config = TrustyBuildConfig(config_file=args.file, debug=args.debug)
     for project in sorted(config.get_projects(**dict(args.filter))):
-        print project
+        print(project)
 
 
 def list_config(args):
     """Read config file and print all project and tests."""
     config = TrustyBuildConfig(config_file=args.file, debug=args.debug)
-    print "Projects:"
+    print("Projects:")
     for project_name, project in sorted(config.projects.items()):
-        print "  " + project_name + ":"
-        print "    Build:", project.build
-        print "    Tests:"
+        print("  " + project_name + ":")
+        print("    Build:", project.build)
+        print("    Tests:")
         for test in project.tests:
-            print "      " + test.name + ":"
-            print "        " + str(test.command)
+            print("      " + test.name + ":")
+            print("        " + str(test.command))
 
     for build in [True, False]:
-        print
-        print "Build:" if build else "Don't build:"
+        print()
+        print("Build:" if build else "Don't build:")
         for tested in [True, False]:
             projects = config.get_projects(build=build, have_tests=tested)
             for project in sorted(projects):
-                print "  " + project + ":"
+                print("  " + project + ":")
                 project_config = config.get_project(project)
                 for test in project_config.tests:
-                    print "    " + test.name
+                    print("    " + test.name)
             if projects and not tested:
-                print "    No tests"
+                print("    No tests")
 
 
 def any_test_name(regex, tests):
@@ -427,11 +427,11 @@ def test_config(args):
             projects = config.get_projects(build=build, have_tests=tested)
             projects_build[build][tested] = projects
             if args.debug:
-                print "Build", build, "tested", tested, "count", len(projects)
+                print("Build", build, "tested", tested, "count", len(projects))
             assert projects
             for project in projects:
                 if args.debug:
-                    print "-", project
+                    print("-", project)
                 m = project_regex.match(project)
                 assert m
                 if build is not None:
@@ -452,12 +452,12 @@ def test_config(args):
                sorted(projects_build[True][tested] +
                       projects_build[False][tested]))
 
-    print "get_projects test passed"
+    print("get_projects test passed")
 
     for project_name in config.get_projects():
         project = config.get_project(project_name)
         if args.debug:
-            print project_name, project
+            print(project_name, project)
         m = project_regex.match(project_name)
         assert m
         kind = m.group(2)
@@ -482,12 +482,12 @@ def test_config(args):
             unit_m = re.match(r"boot-test:self_test.*\.(\d+)",
                               test.name)
             if args.debug:
-                print project, i, test.name
+                print(project, i, test.name)
             m = host_m or unit_m
             assert m
             assert m.group(1) == str(i + 1)
 
-    print "get_tests test passed"
+    print("get_tests test passed")
 
 
 def main():
@@ -497,6 +497,8 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("-d", "--debug", action="store_true")
     parser.add_argument("--file")
+    # work around for https://bugs.python.org/issue16308
+    parser.set_defaults(func=lambda args: parser.print_help())
     subparsers = parser.add_subparsers()
 
     parser_projects = subparsers.add_parser("projects",

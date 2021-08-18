@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python3
 #
 # Copyright (C) 2018 The Android Open Source Project
 #
@@ -127,15 +127,15 @@ def run_tests(build_config, root, project, run_disabled_tests=False,
     test_passed = []
 
     def run_test(name, cmd):
-        print
-        print "Running", name, "on", project
-        print "Command line:", " ".join([s.replace(" ", "\\ ") for s in cmd])
+        print()
+        print("Running", name, "on", project)
+        print("Command line:", " ".join([s.replace(" ", "\\ ") for s in cmd]))
         sys.stdout.flush()
         test_start_time = time.time()
         status = subprocess.call(cmd)
         test_run_time = time.time() - test_start_time
-        print "{:s} returned {:d} after {:.3f} seconds".format(
-            name, status, test_run_time)
+        print("{:s} returned {:d} after {:.3f} seconds".format(
+            name, status, test_run_time))
         test_results.add_result(name, status == 0)
         (test_failed if status else test_passed).append(name)
 

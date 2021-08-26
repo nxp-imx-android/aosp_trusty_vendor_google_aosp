@@ -1,4 +1,5 @@
-#!/usr/bin/env python3
+#!/bin/sh
+"." "`dirname $0`/envsetup.sh"; "exec" "$PY3" "$0" "$@"
 #
 # Copyright (C) 2018 The Android Open Source Project
 #
@@ -132,7 +133,7 @@ def build(args):
         print()
         print("some projects have failed to build:")
         print(str(failed))
-        exit(1)
+        sys.exit(1)
 
 def archive(build_config, args):
     # Copy the files we care about to the archive directory

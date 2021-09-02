@@ -12,7 +12,23 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-export TRUSTY_TOP=$PWD
+gettop() {
+    # $BASH_SOURCE works if the shell is bash. $0 works when the shell was
+    # invoked from a shell script but may fail when sourced in non-bash shell.
+    SCRIPT=$(readlink -f ${BASH_SOURCE:-$0})
+    TOPFILE="trusty/vendor/google/aosp/scripts/envsetup.sh"
+    TOPDIR=$(dirname $SCRIPT)
+    while [ \( ! -f "$TOPDIR/$TOPFILE" \) -a \( "$TOPDIR" != "/" \) ]; do
+        TOPDIR=`dirname $TOPDIR`
+    done
+    if [ ! -f "$TOPDIR/$TOPFILE" ]; then
+        echo "Error: Couldn't locate the top of the trusty tree. Try using bash?" 1>&2
+        exit 1
+    fi
+    echo $TOPDIR
+}
+
+export TRUSTY_TOP=$(gettop)
 export CLANG_BINDIR=${TRUSTY_TOP}/prebuilts/clang/host/linux-x86/clang-r399163b/bin
 export LINUX_CLANG_BINDIR=${TRUSTY_TOP}/prebuilts/clang/host/linux-x86/clang-r428724/bin
 export RUST_BINDIR=${TRUSTY_TOP}/prebuilts/rust/linux-x86/1.54.0/bin
@@ -22,4 +38,4 @@ export ARCH_x86_64_TOOLCHAIN_PREFIX=${TRUSTY_TOP}/prebuilts/gcc/linux-x86/x86/x8
 export ARCH_x86_TOOLCHAIN_PREFIX=${TRUSTY_TOP}/prebuilts/gcc/linux-x86/x86/x86_64-linux-android-4.9/bin/x86_64-linux-android-
 export BUILDTOOLS_BINDIR=${TRUSTY_TOP}/prebuilts/build-tools/linux-x86/bin
 export BUILDTOOLS_COMMON=${TRUSTY_TOP}/prebuilts/build-tools/common
-
+export PY3=$BUILDTOOLS_BINDIR/py3-cmd

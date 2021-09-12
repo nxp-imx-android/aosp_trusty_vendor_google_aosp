@@ -50,7 +50,7 @@ def get_new_build_id(build_root):
 
 
 def mkdir(path):
-    """Create directory includig parents if it does not already exist."""
+    """Create directory including parents if it does not already exist."""
     try:
         os.makedirs(path)
     except OSError:
@@ -84,7 +84,7 @@ def archive_build_file(args, project, src, dest=None, optional=False):
        args: Program arguments.
        project: Project name.
        src: Source path relative to project build dir.
-       dest: Optional dest path relative to archive dir. Can be ommitted if src
+       dest: Optional dest path relative to archive dir. Can be omitted if src
            is a simple filename.
        optional: Optional boolean argument. If True don't exit if source file
            does not exist.
@@ -134,6 +134,7 @@ def build(args):
         print("some projects have failed to build:")
         print(str(failed))
         sys.exit(1)
+
 
 def archive(build_config, args):
     # Copy the files we care about to the archive directory
@@ -256,10 +257,11 @@ def main(default_config=None):
 
     if args.test:
         args.test = [re.compile(testpattern) for testpattern in args.test]
-        def has_test(project_name):
+
+        def has_test(proj_name):
             """filter function to check if a project has args.test."""
-            project = build_config.get_project(project_name)
-            for test in project.tests:
+            proj = build_config.get_project(proj_name)
+            for test in proj.tests:
                 if not test.enabled and not args.run_disabled_tests:
                     continue
                 if run_tests.test_should_run(test.name, args.test):
@@ -338,6 +340,7 @@ def main(default_config=None):
 
         if test_failed:
             sys.exit(1)
+
 
 if __name__ == "__main__":
     main()

@@ -48,12 +48,7 @@ class TrustyBuildConfigProject(object):
 class TrustyPortTestFlags(object):
     """Stores need flags for a test or provide flags for a test environment."""
 
-    ALLOWED_FLAGS = set([
-        "android",
-        "storage_boot",
-        "storage_full",
-        "smp4",
-    ])
+    ALLOWED_FLAGS = {"android", "storage_boot", "storage_full", "smp4"}
 
     def __init__(self, **flags):
         self.flags = set()
@@ -79,7 +74,7 @@ class TrustyArchiveBuildFile(object):
     def __init__(self, src, dest, optional):
         self.src = src
         self.dest = dest
-        self.optional  = optional
+        self.optional = optional
 
 
 class TrustyTest(object):

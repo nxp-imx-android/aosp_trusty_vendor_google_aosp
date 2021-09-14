@@ -319,26 +319,24 @@
                                 "&&"
                                 "storage-unittest td.initnocommitcleanup"),
 
+            # Test confirmation UI
+            androidtest(name="vts:confirmationui@1.0",
+                        command="/data/nativetest64/"
+                                "VtsHalConfirmationUIV1_0TargetTest/"
+                                "VtsHalConfirmationUIV1_0TargetTest"),
+
+            # Test gatekeeper
+            androidtest(name="vts:gatekeeper@1.0",
+                        command="/data/nativetest64/"
+                                "VtsHalGatekeeperV1_0TargetTest/"
+                                "VtsHalGatekeeperV1_0TargetTest"),
+
             # Test keymaster attestation key provisioning
             androidtest(name="keymaster-set-attestation-keys",
                         command="/vendor/bin/"
                                 "trusty_keymaster_set_attestation_key "
                                 "/vendor/etc/"
                                 "keymaster_soft_attestation_keys.xml"),
-
-            # Test keymaster attestation
-            androidtest(name="vts:keymaster-attestation@4.0",
-                        command="setprop ro.boot.verifiedbootstate fake"
-                                "&&"
-                                "/data/nativetest64/"
-                                "VtsHalKeymasterV4_0TargetTest/"
-                                "VtsHalKeymasterV4_0TargetTest"
-                                " --gtest_filter=\""
-                                "*/AttestationTest.RsaAttestation/*:"
-                                "*/AttestationTest.EcAttestation/*:"
-                                "*/AttestationTest.AttestationApplication"
-                                "IDLengthProperlyEncoded/*"
-                                "\""),
 
             # Test keymaster wrapped attestation key provisioning
             androidtest(name="keymaster-wrapped-vts",
@@ -359,15 +357,8 @@
                                 "IDLengthProperlyEncoded/*"
                                 "\""),
 
-            # VTS
-            androidtest(name="vts:confirmationui@1.0",
-                        command="/data/nativetest64/"
-                                "VtsHalConfirmationUIV1_0TargetTest/"
-                                "VtsHalConfirmationUIV1_0TargetTest"),
-            androidtest(name="vts:gatekeeper@1.0",
-                        command="/data/nativetest64/"
-                                "VtsHalGatekeeperV1_0TargetTest/"
-                                "VtsHalGatekeeperV1_0TargetTest"),
+            # Test keymaster
+            #
             # VerificationTokenTest.TestCreation and
             # VerificationTokenTest.MacChangesOnChangingTimestamp *should* pass,
             # but do timing measurements such that the emulator won't always
@@ -380,25 +371,19 @@
             #
             # ClearOperationsTest.TooManyOperations is excluded from testing
             # because KM4 VTS leaks operation slots on Trusty (b/146083990).
-            #
-            # AttestationTest.RsaAttestation, AttestationTest.EcAttestation, and
-            # AttestationTest.AttestationApplicationIDLengthProperlyEncoded are
-            # excluded from testing, since attestation is not set on the
-            # emulator.
             androidtest(name="vts:keymaster@4.0",
-                        command="/data/nativetest64/"
+                        command="setprop ro.boot.verifiedbootstate fake"
+                                "&&"
+                                "/data/nativetest64/"
                                 "VtsHalKeymasterV4_0TargetTest/"
                                 "VtsHalKeymasterV4_0TargetTest"
                                 " --gtest_filter="
                                 "\"-*/VerificationTokenTest.TestCreation/*:"
                                 "*/VerificationTokenTest."
                                 "MacChangesOnChangingTimestamp/*:"
-                                "*/ClearOperationsTest.TooManyOperations/*:"
-                                "*/AttestationTest.RsaAttestation/*:"
-                                "*/AttestationTest.EcAttestation/*:"
-                                "*/AttestationTest.AttestationApplication"
-                                "IDLengthProperlyEncoded/*\"",
+                                "*/ClearOperationsTest.TooManyOperations/*\"",
                         timeout=(60 * 60)),
+
             # Metrics test
             androidtest(name="trusty-metrics",
                         command="/data/nativetest64/vendor/"

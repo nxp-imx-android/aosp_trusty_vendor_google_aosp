@@ -331,15 +331,15 @@
                                 "VtsHalGatekeeperV1_0TargetTest/"
                                 "VtsHalGatekeeperV1_0TargetTest"),
 
-            # Test keymaster attestation key provisioning
-            androidtest(name="keymaster-set-attestation-keys",
+            # Test keymint attestation key provisioning
+            androidtest(name="keymint-set-attestation-keys",
                         command="/vendor/bin/"
                                 "trusty_keymaster_set_attestation_key "
                                 "/vendor/etc/"
                                 "keymaster_soft_attestation_keys.xml"),
 
-            # Test keymaster wrapped attestation key provisioning
-            androidtest(name="keymaster-wrapped-vts",
+            # Test keymint wrapped attestation key provisioning
+            androidtest(name="keymint-wrapped-vts",
                         command="/vendor/bin/"
                                 "trusty_keymaster_set_attestation_key "
                                 "/vendor/etc/"
@@ -348,40 +348,32 @@
                                 "setprop ro.boot.verifiedbootstate fake"
                                 "&&"
                                 "/data/nativetest64/"
-                                "VtsHalKeymasterV4_0TargetTest/"
-                                "VtsHalKeymasterV4_0TargetTest"
+                                "VtsAidlKeyMintTargetTest/"
+                                "VtsAidlKeyMintTargetTest"
                                 " --gtest_filter=\""
-                                "*/AttestationTest.RsaAttestation/*:"
-                                "*/AttestationTest.EcAttestation/*:"
-                                "*/AttestationTest.AttestationApplication"
-                                "IDLengthProperlyEncoded/*"
+                                "*/AttestKeyTest.*"
                                 "\""),
 
-            # Test keymaster
-            #
-            # VerificationTokenTest.TestCreation and
-            # VerificationTokenTest.MacChangesOnChangingTimestamp *should* pass,
-            # but do timing measurements such that the emulator won't always
-            # pass.
-            #
-            # These tests should pass *most* of the time on the emulator, but
-            # are too flaky to have on in presubmit.
-            #
-            # If we test on real devices, these tests should be *on*.
+            # Test keymint
             #
             # ClearOperationsTest.TooManyOperations is excluded from testing
             # because KM4 VTS leaks operation slots on Trusty (b/146083990).
-            androidtest(name="vts:keymaster@4.0",
+            #
+            # EarlyBootKeyTest.UseEarlyBootKeyFailure and
+            # EarlyBootKeyTest.ImportEarlyBootKeyFailure test cases are exluded
+            # because keystore (not present on Trusty emulator image) is needed
+            # to propagate earlyBootEnded signal.
+            androidtest(name="vts:keymint",
                         command="setprop ro.boot.verifiedbootstate fake"
                                 "&&"
                                 "/data/nativetest64/"
-                                "VtsHalKeymasterV4_0TargetTest/"
-                                "VtsHalKeymasterV4_0TargetTest"
+                                "VtsAidlKeyMintTargetTest/"
+                                "VtsAidlKeyMintTargetTest"
                                 " --gtest_filter="
-                                "\"-*/VerificationTokenTest.TestCreation/*:"
-                                "*/VerificationTokenTest."
-                                "MacChangesOnChangingTimestamp/*:"
-                                "*/ClearOperationsTest.TooManyOperations/*\"",
+                                "\"-*/ClearOperationsTest.TooManyOperations/*:"
+                                "*/EarlyBootKeyTest.UseEarlyBootKeyFailure/*:"
+                                "*/EarlyBootKeyTest."
+                                "ImportEarlyBootKeyFailure/*\"",
                         timeout=(60 * 60)),
 
             # Metrics test

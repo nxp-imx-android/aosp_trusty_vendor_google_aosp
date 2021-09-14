@@ -331,6 +331,14 @@
                                 "VtsHalGatekeeperV1_0TargetTest/"
                                 "VtsHalGatekeeperV1_0TargetTest"),
 
+            # Test RPK
+            androidtest(name="vts:rpk",
+                        command="setprop ro.boot.verifiedbootstate fake"
+                                "&&"
+                                "/data/nativetest64/"
+                                "VtsHalRemotelyProvisionedComponentTargetTest/"
+                                "VtsHalRemotelyProvisionedComponentTargetTest"),
+
             # Test keymint attestation key provisioning
             androidtest(name="keymint-set-attestation-keys",
                         command="/vendor/bin/"

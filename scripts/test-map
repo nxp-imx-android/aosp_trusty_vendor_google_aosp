@@ -78,7 +78,7 @@
             hosttest("avb_test"),
             hosttest("keymaster_test"),
             hosttest("mock_storage_test"),
-            hosttest("storage_test"),
+            hosttest("storage_block_test"),
             hosttests([
                 include("trusty/kernel/build-config-kerneltests"),
                 include("trusty/user/base/build-config-usertests"),

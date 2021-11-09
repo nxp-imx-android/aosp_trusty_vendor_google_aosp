@@ -167,14 +167,6 @@ def archive(build_config, args):
         # copy out test package if it exists
         archive_build_file(args, project, "trusty_test_package.zip", optional=True)
 
-        # collect and save all .lst
-        subprocess.call("cd " +
-                        os.path.join(args.build_root, "build-" + project) +
-                        ';find . -name "*.lst" -print ' +
-                        "| zip " + os.path.join(args.archive, project + "-" +
-                                                args.buildid + ".lst.zip") +
-                        " -@", shell=True, executable="/bin/bash")
-
 
 def get_build_deps(project_name, project, project_names, already_built):
     if project_name not in already_built:

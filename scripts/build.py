@@ -38,6 +38,9 @@ DEV_SIGNING_KEY_FILES = [
     "apploader_sign_test_private_key_0.der",
     "apploader_sign_test_public_key_0.der"
 ]
+TRUSTED_APP_MAKEFILE_PATH = "trusty/user/base/make/trusted_app.mk"
+TRUSTED_LOADABLE_APP_MAKEFILE_PATH = "trusty/kernel/make/loadable_app.mk"
+GEN_MANIFEST_MAKEFILE_PATH = "trusty/user/base/make/gen_manifest.mk"
 
 
 def get_new_build_id(build_root):
@@ -161,6 +164,10 @@ def assemble_sdk(args):
             src = os.path.join(project_buildroot, "sdk", "LICENSE")
             archive_file(sdk_archive, src, sdk_name)
 
+            project_makefile_dir = os.path.join(sdk_name, "make", project)
+            src = os.path.join(project_buildroot, "sdk", "make")
+            archive_dir(sdk_archive, src, project_makefile_dir)
+
             src = os.path.join(project_buildroot, "host_tools", "apploader_package_tool")
             archive_file(sdk_archive, src, tools_dest)
 
@@ -170,6 +177,11 @@ def assemble_sdk(args):
         # Add AOSP qemu dev signing key.
         for filename in DEV_SIGNING_KEY_FILES:
             archive_file(sdk_archive, os.path.join(DEV_SIGNING_KEY_PATH, filename), tools_dest)
+
+        # Copy the app makefile
+        archive_file(sdk_archive, TRUSTED_APP_MAKEFILE_PATH, os.path.join(sdk_name, "make"))
+        archive_file(sdk_archive, TRUSTED_LOADABLE_APP_MAKEFILE_PATH, os.path.join(sdk_name, "make"))
+        archive_file(sdk_archive, GEN_MANIFEST_MAKEFILE_PATH, os.path.join(sdk_name, "make"))
 
         # Copy SDK README
         archive_file(sdk_archive, SDK_README_PATH, sdk_name)

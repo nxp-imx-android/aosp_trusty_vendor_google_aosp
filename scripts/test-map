@@ -371,6 +371,9 @@
             # EarlyBootKeyTest.ImportEarlyBootKeyFailure test cases are exluded
             # because keystore (not present on Trusty emulator image) is needed
             # to propagate earlyBootEnded signal.
+            #
+            # TODO(b/208872187): Remove --skip_boot_pl_check once we have boot
+            # patchlevel configured.
             androidtest(name="vts:keymint",
                         command="setprop ro.boot.verifiedbootstate fake"
                                 "&&"
@@ -381,7 +384,8 @@
                                 "\"-*/ClearOperationsTest.TooManyOperations/*:"
                                 "*/EarlyBootKeyTest.UseEarlyBootKeyFailure/*:"
                                 "*/EarlyBootKeyTest."
-                                "ImportEarlyBootKeyFailure/*\"",
+                                "ImportEarlyBootKeyFailure/*\""
+                                " --skip_boot_pl_check",
                         timeout=(60 * 60)),
 
             # Metrics test

@@ -167,6 +167,12 @@ def archive(build_config, args):
         # copy out test package if it exists
         archive_build_file(args, project, "trusty_test_package.zip", optional=True)
 
+        # export the app package tool for use in the SDK. This can go away once
+        # all the SDK patches have landed, as the tool will be packaged in the
+        # SDK zip.
+        archive_build_file(args, project, "host_tools/apploader_package_tool",
+                           "apploader_package_tool", optional=True)
+
 
 def get_build_deps(project_name, project, project_names, already_built):
     if project_name not in already_built:

@@ -1,4 +1,5 @@
-#!/usr/bin/env python3
+#!/bin/sh
+"." "`dirname $0`/envsetup.sh"; "exec" "$PY3" "$0" "$@"
 #
 # Copyright (C) 2018 The Android Open Source Project
 #

@@ -25,6 +25,7 @@ import re
 import shutil
 import subprocess
 import sys
+from zipfile import ZipFile, ZIP_DEFLATED
 
 import run_tests
 import trusty_build_config
@@ -134,6 +135,59 @@ def build(args):
         sys.exit(1)
 
 
+def zip_dir(archive, src, dest, filter=lambda _: True):
+    """Recursively add a directory to a ZIP file.
+
+    Recursively add the src directory to the ZIP with dest path inside the
+    archive.
+
+    Args:
+       archive: A ZipFile opened for append or write.
+       src: Source directory to add to the archive.
+       dest: Destination path inside the archive (must be a relative path).
+    """
+    for root, _dirs, files in os.walk(src):
+        for f in files:
+            if not filter(f):
+                continue
+            file_path = os.path.join(root, f)
+            archive_dest = os.path.join(dest,
+                                        os.path.relpath(file_path, start=src))
+            archive.write(file_path, archive_dest)
+
+
+def zip_file(archive, src_file, dest_dir=""):
+    """Add a file to a ZIP file.
+
+    Adds src_file to archive in the directory dest_dir, relative to the root of
+    the archive.
+
+    Args:
+       archive: A ZipFile opened for append or write.
+       src_file: Source file to add to the archive.
+       dest_dir: Relative destination path in the archive for this file.
+    """
+    archive.write(src_file, os.path.join(dest_dir, os.path.basename(src_file)))
+
+
+def archive_symbols(args, project):
+    """Archive symbol files for the kernel and each trusted app"""
+    mkdir(args.archive)
+
+    proj_buildroot = os.path.join(args.build_root, "build-" + project)
+    filename = os.path.join(args.archive, f"{project}-{args.buildid}.syms.zip")
+
+    with ZipFile(filename, 'a', compression=ZIP_DEFLATED) as archive:
+        print("Archiving symbols in " + os.path.relpath(filename, args.archive))
+
+        # archive the kernel symbols
+        zip_file(archive, os.path.join(proj_buildroot, "lk.elf.sym"))
+        zip_file(archive, os.path.join(proj_buildroot, "lk.elf.sym.sorted"))
+
+        # archive path/to/app.syms.elf for each trusted app
+        zip_dir(archive, proj_buildroot, "", lambda f: f.endswith("syms.elf"))
+
+
 def archive(build_config, args):
     # Copy the files we care about to the archive directory
     for project in args.project:
@@ -172,6 +226,9 @@ def archive(build_config, args):
         # SDK zip.
         archive_build_file(args, project, "host_tools/apploader_package_tool",
                            "apploader_package_tool", optional=True)
+
+        # copy out symbol files for kernel and apps
+        archive_symbols(args, project)
 
 
 def get_build_deps(project_name, project, project_names, already_built):

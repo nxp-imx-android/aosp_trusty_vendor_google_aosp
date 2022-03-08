@@ -31,7 +31,7 @@ gettop() {
 export TRUSTY_TOP=$(gettop)
 export CLANG_BINDIR=${TRUSTY_TOP}/prebuilts/clang/host/linux-x86/clang-r416183c1/bin
 export LINUX_CLANG_BINDIR=${TRUSTY_TOP}/prebuilts/clang/host/linux-x86/clang-r433403/bin
-export RUST_BINDIR=${TRUSTY_TOP}/prebuilts/rust/linux-x86/1.57.0/bin
+export RUST_BINDIR=${TRUSTY_TOP}/prebuilts/rust/linux-x86/1.59.0/bin
 export ARCH_arm_TOOLCHAIN_PREFIX=${TRUSTY_TOP}/prebuilts/gcc/linux-x86/arm/arm-linux-androideabi-4.9/bin/arm-linux-androideabi-
 export ARCH_arm64_TOOLCHAIN_PREFIX=${TRUSTY_TOP}/prebuilts/gcc/linux-x86/aarch64/aarch64-linux-android-4.9/bin/aarch64-linux-android-
 export ARCH_x86_64_TOOLCHAIN_PREFIX=${TRUSTY_TOP}/prebuilts/gcc/linux-x86/x86/x86_64-linux-android-4.9/bin/x86_64-linux-android-

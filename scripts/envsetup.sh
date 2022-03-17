@@ -40,3 +40,8 @@ export ARCH_x86_TOOLCHAIN_PREFIX=${TRUSTY_TOP}/prebuilts/gcc/linux-x86/x86/x86_6
 export BUILDTOOLS_BINDIR=${TRUSTY_TOP}/prebuilts/build-tools/linux-x86/bin
 export BUILDTOOLS_COMMON=${TRUSTY_TOP}/prebuilts/build-tools/common
 export PY3=$BUILDTOOLS_BINDIR/py3-cmd
+
+# Bindgen uses clang and libclang at runtime, so we need to tell it where to
+# look for these tools.
+export BINDGEN_CLANG_PATH=${TRUSTY_TOP}/prebuilts/clang/host/linux-x86/clang-r416183c1/bin/clang
+export BINDGEN_LIBCLANG_PATH=${TRUSTY_TOP}/prebuilts/clang/host/linux-x86/clang-r416183c1/lib64

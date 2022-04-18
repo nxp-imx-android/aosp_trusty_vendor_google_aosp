@@ -29,7 +29,7 @@ gettop() {
 }
 
 export TRUSTY_TOP=$(gettop)
-export CLANG_BINDIR=${TRUSTY_TOP}/prebuilts/clang/host/linux-x86/clang-r416183c1/bin
+export CLANG_BINDIR=${TRUSTY_TOP}/prebuilts/clang/host/linux-x86/clang-r433403/bin
 export CLANG_TOOLS_BINDIR=${TRUSTY_TOP}/prebuilts/clang-tools/linux-x86/bin
 export LINUX_CLANG_BINDIR=${TRUSTY_TOP}/prebuilts/clang/host/linux-x86/clang-r433403/bin
 export RUST_BINDIR=${TRUSTY_TOP}/prebuilts/rust/linux-x86/1.59.0/bin
@@ -43,5 +43,5 @@ export PY3=$BUILDTOOLS_BINDIR/py3-cmd
 
 # Bindgen uses clang and libclang at runtime, so we need to tell it where to
 # look for these tools.
-export BINDGEN_CLANG_PATH=${TRUSTY_TOP}/prebuilts/clang/host/linux-x86/clang-r416183c1/bin/clang
-export BINDGEN_LIBCLANG_PATH=${TRUSTY_TOP}/prebuilts/clang/host/linux-x86/clang-r416183c1/lib64
+export BINDGEN_CLANG_PATH=${TRUSTY_TOP}/prebuilts/clang/host/linux-x86/clang-r433403/bin/clang
+export BINDGEN_LIBCLANG_PATH=${TRUSTY_TOP}/prebuilts/clang/host/linux-x86/clang-r433403/lib64

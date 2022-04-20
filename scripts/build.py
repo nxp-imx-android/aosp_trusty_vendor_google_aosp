@@ -180,6 +180,9 @@ def archive_symbols(args, project):
     with ZipFile(filename, 'a', compression=ZIP_DEFLATED) as archive:
         print("Archiving symbols in " + os.path.relpath(filename, args.archive))
 
+        # archive the kernel elf file
+        zip_file(archive, os.path.join(proj_buildroot, "lk.elf"))
+
         # archive the kernel symbols
         zip_file(archive, os.path.join(proj_buildroot, "lk.elf.sym"))
         zip_file(archive, os.path.join(proj_buildroot, "lk.elf.sym.sorted"))

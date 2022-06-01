@@ -59,6 +59,19 @@
 [
     testmap(
         projects=[
+            "qemu-generic-arm64-test-debug-release",
+            "qemu-generic-arm32-test-debug-release",
+        ],
+        tests=[
+            boottests([
+                include("trusty/user/base/build-config-usertests-release"),
+            ]),
+        ],
+    ),
+
+
+    testmap(
+        projects=[
             "generic-arm64-test-debug",
         ],
         tests=[

@@ -166,7 +166,7 @@ def main():
     test_results = run_tests(build_config, args.root, args.project)
     test_results.print_results()
     if not test_results.passed:
-        exit(1)
+        sys.exit(1)
 
 
 if __name__ == "__main__":

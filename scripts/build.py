@@ -119,6 +119,8 @@ def build(args):
     for project in args.project:
         cmd = "export BUILDROOT=" + args.build_root
         cmd += "; export BUILDID=" + args.buildid
+        if args.dynamic_param is not None:
+            cmd += "; export " + str(args.dynamic_param)
         cmd += "; nice make " + project + " -j " + str(args.jobs)
         # Call envsetup.  If it fails, abort.
         cmd = "source %s && (%s)" % (os.path.join(script_dir, "envsetup.sh"),
@@ -280,6 +282,8 @@ def main(default_config=None):
                         "build-config file.", default=default_config)
     parser.add_argument("--android", type=str,
                         help="Path to an Android build to run tests against.")
+
+    parser.add_argument("--dynamic_param", type=str, help="Build parameters", default=None)
     args = parser.parse_args()
 
     if args.archive is None:

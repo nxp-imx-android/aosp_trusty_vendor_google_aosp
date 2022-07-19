@@ -242,6 +242,7 @@ def build(args):
 
     for project in args.project:
         cmd = (f'export BUILDROOT={args.build_root};'
+               f'export {args.dynamic_param};'
                f'export BUILDID={args.buildid}; nice make {project} '
                f'-f external/lk/makefile -j {args.jobs}')
         # Call envsetup.  If it fails, abort.
@@ -469,6 +470,7 @@ def main(default_config=None):
                         "build-config file.", default=default_config)
     parser.add_argument("--android", type=str,
                         help="Path to an Android build to run tests against.")
+    parser.add_argument("--dynamic_param", type=str, help="Build parameters", default=None)
     args = parser.parse_args()
 
     build_config = trusty_build_config.TrustyBuildConfig(

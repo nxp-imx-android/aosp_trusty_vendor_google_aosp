@@ -229,15 +229,11 @@ class TrustyBuildConfig(object):
                 timeout_args = ['--timeout', str(timeout)]
             else:
                 timeout_args = []
-            if self.android:
-                android_args = ['--android', self.android]
-            else:
-                android_args = []
             runargs = list(runargs)
             return TrustyTest(nameprefix + name,
                               ["run", "--headless",
                                "--shell-command", command
-                              ] + timeout_args + android_args + runargs,
+                              ] + timeout_args + runargs,
                               enabled,
                              )
 

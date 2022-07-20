@@ -27,12 +27,12 @@ Run tests for a project.
 """
 
 import argparse
+import importlib
 import subprocess
 import sys
 import time
 
 import trusty_build_config
-
 
 class TestResults(object):
     """Stores test results.
@@ -125,33 +125,74 @@ def run_tests(build_config, root, project, run_disabled_tests=False,
         TestResults object listing overall and detailed test results.
     """
     project_config = build_config.get_project(project=project)
+    project_root = f"{root}/build-{project}"
 
     test_results = TestResults(project)
-    test_failed = []
-    test_passed = []
 
-    def run_test(name, cmd):
+    def load_test_environment():
+        sys.path.append(project_root)
+        if run := sys.modules.get("run"):
+            if not run.__file__.startswith(project_root):
+                # run module was imported for another project and needs to be
+                # replaced with the one for the current project.
+                run = importlib.reload(run)
+        else:
+            # first import in this interpreter instance, we use importlib rather
+            # than a regular import statement since it avoids linter warnings.
+            run = importlib.import_module("run")
+        sys.path.pop()
+
+        return run
+
+    def run_test(test):
+        """Execute a single test and print out helpful information"""
+        cmd = test.command[1:]
+        disable_rpmb = True if "--disable_rpmb" in cmd else None
+
         print()
-        print("Running", name, "on", project)
-        print("Command line:", " ".join([s.replace(" ", "\\ ") for s in cmd]))
-        sys.stdout.flush()
+        print("Running", test.name, "on", test_results.project)
         test_start_time = time.time()
-        status = subprocess.call(cmd)
-        test_run_time = time.time() - test_start_time
-        print(f"{name:s} returned {status:d} after {test_run_time:.3f} seconds")
-        test_results.add_result(name, status == 0)
-        (test_failed if status else test_passed).append(name)
+
+        match test:
+            case trusty_build_config.TrustyHostTest():
+                # append nice and expand path to command
+                cmd = ["nice", f"{project_root}/{test.command[0]}"] + cmd
+                print("Command line:",
+                      " ".join([s.replace(" ", "\\ ") for s in cmd]),
+                      flush=True)
+                status = subprocess.call(cmd)
+            case trusty_build_config.TrustyTest():
+                if "--shell-command" in cmd:
+                    inner_cmd = cmd[cmd.index("--shell-command") + 1]
+                    print("Command line:", inner_cmd.replace(" ", "\\ "),
+                          flush=True)
+
+                test_env = None
+                test_runner = None
+                try:
+                    test_env = load_test_environment()
+                    test_runner = test_env.init(android=build_config.android,
+                                                disable_rpmb=disable_rpmb,
+                                                verbose=verbose,
+                                                debug_on_error=debug_on_error)
+                    status = test_env.run_test(test_runner, cmd)
+                finally:
+                    if test_env:
+                        test_env.shutdown(test_runner)
+            case _:
+                raise NotImplementedError(f"Don't know how to run {test.name}")
+
+        elapsed = time.time() - test_start_time
+        print(f"{test.name:s} returned {status:d} after {elapsed:.3f} seconds")
+        test_results.add_result(test.name, status == 0)
 
     for test in project_config.tests:
         if not test.enabled and not run_disabled_tests:
             continue
         if not test_should_run(test.name, test_filter):
             continue
-        project_root = root + "/build-" + project + "/"
-        cmd = (["nice", project_root + test.command[0]] + test.command[1:]
-               + (["--verbose"] if verbose else [])
-               + (["--debug-on-error"] if debug_on_error else []))
-        run_test(name=test.name, cmd=cmd)
+
+        run_test(test)
 
     return test_results
 

@@ -32,10 +32,14 @@ import subprocess
 import sys
 import time
 from typing import List, Optional
+from collections import namedtuple
 
 from trusty_build_config import TrustyTest, TrustyCompositeTest
 from trusty_build_config import TrustyRebootCommand, TrustyHostTest
 from trusty_build_config import TrustyAndroidTest, TrustyBuildConfig
+
+
+TestResult = namedtuple("TestResult", "test passed retried")
 
 
 class TestResults(object):
@@ -46,6 +50,8 @@ class TestResults(object):
         passed: True if all tests passed, False if one or more tests failed.
         passed_count: Number of tests passed.
         failed_count: Number of tests failed.
+        flaked_count: Number of tests that failed then passed on second try.
+        retried_count: Number of tests that were given a second try.
         test_results: List of tuples storing test name an status.
     """
 
@@ -55,16 +61,23 @@ class TestResults(object):
         self.passed = True
         self.passed_count = 0
         self.failed_count = 0
+        self.flaked_count = 0
+        self.retried_count = 0
         self.test_results = []
 
-    def add_result(self, test, passed):
+    def add_result(self, test: str, passed: bool, retried: bool):
         """Add a test result."""
-        self.test_results.append((test, passed))
+        self.test_results.append(TestResult(test, passed, retried))
         if passed:
             self.passed_count += 1
+            if retried:
+                self.flaked_count += 1
         else:
             self.passed = False
             self.failed_count += 1
+
+        if retried:
+            self.retried_count += 1
 
     def print_results(self, print_failed_only=False):
         """Print test results."""
@@ -79,18 +92,28 @@ class TestResults(object):
         out.write("\n"
                   f"Ran {test_count} tests for project {self.project}.\n")
         if test_count:
-            for test, passed in self.test_results:
-                if passed:
-                    if not print_failed_only:
-                        out.write(f"[       OK ] {test}\n")
-                else:
-                    out.write(f"[  FAILED  ] {test}\n")
+            for result in self.test_results:
+                match (result.passed, result.retried, print_failed_only):
+                    case (False, _, _):
+                        out.write(f"[  FAILED  ] {result.test}\n")
+                    case (True, retried, False):
+                        out.write(f"[       OK ] {result.test}\n")
+                        if retried:
+                            out.write(f"WARNING: {result.test} was re-run and "
+                                      "passed on second try; it may be flaky\n")
+
             out.write(f"[==========] {test_count} tests ran for project "
                       f"{self.project}.\n")
             if self.passed_count and not print_failed_only:
                 out.write(f"[  PASSED  ] {self.passed_count} tests.\n")
             if self.failed_count:
                 out.write(f"[  FAILED  ] {self.failed_count} tests.\n")
+            if self.flaked_count > 0:
+                out.write(f"WARNING: {self.flaked_count} tests passed when "
+                          "re-run which indicates that they may be flaky.\n")
+            if self.retried_count == MAX_RETRIES:
+                out.write(f"WARNING: hit MAX_RETRIES({MAX_RETRIES}) during "
+                          "testing after which point, no tests were retried.\n")
 
 
 def test_should_run(testname, test_filter):
@@ -110,6 +133,14 @@ def test_should_run(testname, test_filter):
         if r.search(testname):
             return True
     return False
+
+
+# Put a global cap on the number of retries to detect flaky tests such that we
+# do not risk increasing the time to try all tests substantially. This should be
+# fine since *most* tests are not flaky.
+# TODO: would it be better to put a cap on the time spent retrying tests? We may
+#       not want to retry long running tests.
+MAX_RETRIES = 10
 
 
 def run_tests(build_config, root, project, run_disabled_tests=False,
@@ -158,15 +189,13 @@ def run_tests(build_config, root, project, run_disabled_tests=False,
                   " ".join([s.replace(" ", "\\ ") for s in cmd]))
         sys.stdout.flush()
 
-    def run_test(test, parent_test: Optional[TrustyCompositeTest] = None
-                 ) -> int:
+    def run_test(test, parent_test: Optional[TrustyCompositeTest] = None,
+                 retry=True) -> int:
         """Execute a single test and print out helpful information"""
         nonlocal test_env, test_runner
         cmd = test.command[1:]
         disable_rpmb = True if "--disable_rpmb" in cmd else None
 
-        print()
-        print("Running", test.name, "on", test_results.project)
         test_start_time = time.time()
 
         match test:
@@ -178,10 +207,11 @@ def run_tests(build_config, root, project, run_disabled_tests=False,
             case TrustyCompositeTest():
                 status = 0
                 for subtest in test.sequence:
-                    if status := run_test(subtest, test):
+                    if status := run_test(subtest, test, retry):
                         # fail the composite test with the same status code as
                         # the first failing subtest
                         break
+
             case TrustyTest():
                 if isinstance(test, TrustyAndroidTest):
                     print_test_command(test.name, [test.shell_command])
@@ -214,7 +244,18 @@ def run_tests(build_config, root, project, run_disabled_tests=False,
 
         elapsed = time.time() - test_start_time
         print(f"{test.name:s} returned {status:d} after {elapsed:.3f} seconds")
-        test_results.add_result(test.name, status == 0)
+
+        if status and retry and test_results.retried_count < MAX_RETRIES:
+            print(f"retrying potentially flaky test {test.name} on",
+                  test_results.project)
+            # TODO: first retry the test without restarting the test environment
+            #       and if that fails, restart and then retry if < MAX_RETRIES.
+            if test_env:
+                test_env.shutdown(test_runner)
+                test_runner = None
+            status = run_test(test, parent_test, retry=False)
+        else:
+            test_results.add_result(test.name, status == 0, not retry)
         return status
 
     try:

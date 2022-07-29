@@ -261,6 +261,7 @@ class TrustyBuildConfig(object):
                                                storage_full=True,
                                                smp4=True)
             return [androidporttest(test.port, enabled=test.enabled,
+                                    timeout=test.timeout,
                                     nameprefix=nameprefix, cmdargs=cmdargs,
                                     runargs=runargs)
                     for test in porttests_filter(port_tests, provides)]

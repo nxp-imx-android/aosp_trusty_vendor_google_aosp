@@ -198,7 +198,7 @@
             # TIPC linux to trusty echo test repeat so 16 bit virtio index wraps
             androidtest(name="tipc:echo-long",
                         command="/data/nativetest64/vendor/tipc-test/tipc-test "
-                                "-t echo -r 70000"),
+                                "-t echo -r 65537"),
 
             # NS shares NS memory with S
             androidtest(name="tipc:send-fd",

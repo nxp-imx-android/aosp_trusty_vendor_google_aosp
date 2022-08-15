@@ -22,7 +22,7 @@ The configuration files that are provided do not build Trusty for you. You'll
 need to do that on the command line:
 
 ```shell
-$ ./trusty/vendor/google/aosp/scripts/build.py --skip-tests qemu-generic-amd64-test-debug
+$ ./trusty/vendor/google/aosp/scripts/build.py --skip-tests qemu-generic-arm64-test-debug
 ```
 
 ## Debugging
@@ -33,7 +33,7 @@ Because our integration with LLDB is hacky, the debugger will lose track of a
 process after syscalls are made. You'll need to add breakpoints after each
 syscall to step past them.
 
-As long as you've built the `qemu-generic-amd64-test-debug` Trusty project
+As long as you've built the `qemu-generic-arm64-test-debug` Trusty project
 you can switch to the Run/Debug view (View > Run) and click the button that says
 `Debug with Prebuilt`.
 

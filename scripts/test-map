@@ -76,6 +76,7 @@
         ],
         tests=[
             hosttest("avb_test"),
+            hosttest("cbor_test"),
             hosttest("keymaster_test"),
             hosttest("mock_storage_test"),
             hosttest("storage_block_test"),

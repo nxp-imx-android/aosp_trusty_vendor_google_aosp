@@ -114,7 +114,15 @@ def archive_build_file(args, project, src, dest=None, optional=False):
     copy_file(src, dest, optional=optional)
 
 
-def archive_dir(archive, src, dest):
+def is_child_of_any(path, possible_parents):
+    for possible_parent in possible_parents:
+        if path.startswith(possible_parent):
+            print("Found", possible_parent, "is parent of", path)
+            return True
+    return False
+
+
+def archive_dir(archive, src, dest, omit=[]):
     """Recursively add a directory to a ZIP file.
 
     Recursively add the src directory to the ZIP with dest path inside the
@@ -124,14 +132,19 @@ def archive_dir(archive, src, dest):
        archive: A ZipFile opened for append or write.
        src: Source directory to add to the archive.
        dest: Destination path inside the archive (must be a relative path).
+       omit: List of directorys to omit from the archive. Specified as relative paths from `src`.
     """
     for root, dirs, files in os.walk(src):
+        rel_root = os.path.relpath(root, start=src)
+        if is_child_of_any(rel_root, omit):
+            continue
+
         for f in files:
             file_path = os.path.join(root, f)
             archive_dest = os.path.join(dest, os.path.relpath(file_path, start=src))
             archive.write(file_path, archive_dest)
 
-def archive_file(archive, src_file, dest_dir=""):
+def archive_file(archive, src_file, dest_dir="", optional=False):
     """Add a file to a ZIP file.
 
     Adds src_file to archive in the directory dest_dir, relative to the root of
@@ -141,62 +154,65 @@ def archive_file(archive, src_file, dest_dir=""):
        archive: A ZipFile opened for append or write.
        src_file: Source file to add to the archive.
        dest_dir: Relative destination path in the archive for this file.
+       optional: Optional boolean argument. If True don't exit if source file
+           does not exist.
     """
+    if not os.path.exists(src_file) and optional:
+        return
     archive.write(src_file, os.path.join(dest_dir, os.path.basename(src_file)))
 
 
 def assemble_sdk(args):
     """Assemble Trusty SDK archive"""
-    mkdir(args.archive)
-
-    sdk_name = "trusty_sdk-" + args.buildid
-    tools_dest = os.path.join(sdk_name, "tools")
-    filename = os.path.join(args.archive, sdk_name + ".zip")
+    filename = os.path.join(args.archive, "trusty_sdk-" + args.buildid + ".zip")
     with ZipFile(filename, 'a', compression=ZIP_DEFLATED) as sdk_archive:
         print("Building SDK archive ZIP...")
         for project in args.project:
             project_buildroot = os.path.join(args.build_root, "build-" + project)
 
-            project_sysroot_dir = os.path.join(sdk_name, "sysroots", project, "usr")
+            project_sysroot_dir = os.path.join("sysroots", project, "usr")
             src = os.path.join(project_buildroot, "sdk", "sysroot", "usr")
-            archive_dir(sdk_archive, src, project_sysroot_dir)
+            archive_dir(sdk_archive, src, project_sysroot_dir, omit=["lib/doc"])
 
             src = os.path.join(project_buildroot, "sdk", "LICENSE")
-            archive_file(sdk_archive, src, sdk_name)
+            archive_file(sdk_archive, src)
 
-            project_makefile_dir = os.path.join(sdk_name, "make", project)
+            project_makefile_dir = os.path.join("make", project)
             src = os.path.join(project_buildroot, "sdk", "make")
             archive_dir(sdk_archive, src, project_makefile_dir)
 
             src = os.path.join(project_buildroot, "host_tools", "apploader_package_tool")
-            archive_file(sdk_archive, src, tools_dest)
+            archive_file(sdk_archive, src, "tools", optional=True)
 
             src = os.path.join(project_buildroot, "sdk", "tools", "manifest_compiler.py")
-            archive_file(sdk_archive, src, tools_dest)
+            archive_file(sdk_archive, src, "tools")
 
         # Add AOSP qemu dev signing key.
         for filename in DEV_SIGNING_KEY_FILES:
-            archive_file(sdk_archive, os.path.join(DEV_SIGNING_KEY_PATH, filename), tools_dest)
+            archive_file(sdk_archive, os.path.join(DEV_SIGNING_KEY_PATH, filename), "tools")
 
         # Copy the app makefile
-        archive_file(sdk_archive, TRUSTED_APP_MAKEFILE_PATH, os.path.join(sdk_name, "make"))
-        archive_file(sdk_archive, TRUSTED_LOADABLE_APP_MAKEFILE_PATH, os.path.join(sdk_name, "make"))
-        archive_file(sdk_archive, GEN_MANIFEST_MAKEFILE_PATH, os.path.join(sdk_name, "make"))
+        archive_file(sdk_archive, TRUSTED_APP_MAKEFILE_PATH, "make")
+        archive_file(sdk_archive, TRUSTED_LOADABLE_APP_MAKEFILE_PATH, "make")
+        archive_file(sdk_archive, GEN_MANIFEST_MAKEFILE_PATH, "make")
 
         # Copy SDK README
-        archive_file(sdk_archive, SDK_README_PATH, sdk_name)
+        archive_file(sdk_archive, SDK_README_PATH)
 
-        # Add clang prebuilt toolchain
-        dest = os.path.join(sdk_name, "toolchain", "clang")
+        # Add clang version info
         cmd = f"source {os.path.join(script_dir, 'envsetup.sh')} && echo $CLANG_BINDIR"
         clang_bindir = subprocess.check_output(cmd, shell=True, executable="/bin/bash").decode().strip()
-        archive_dir(sdk_archive, os.path.join(clang_bindir, ".."), dest)
+        clang_dir = os.path.join(clang_bindir, "../")
+        archive_file(sdk_archive, os.path.join(clang_dir, "AndroidVersion.txt"), "clang")
+        archive_file(sdk_archive, os.path.join(clang_dir, "clang_source_info.md"), "clang")
+
+        # Add trusty version info
+        sdk_archive.writestr("Version.txt", args.buildid)
 
 
 def build(args):
     """Call build system and copy build files to archive dir."""
     mkdir(args.build_root)
-    mkdir(args.archive)
 
     if args.buildid is None:
         args.buildid = get_new_build_id(args.build_root)
@@ -261,8 +277,6 @@ def zip_file(archive, src_file, dest_dir=""):
 
 def archive_symbols(args, project):
     """Archive symbol files for the kernel and each trusted app"""
-    mkdir(args.archive)
-
     proj_buildroot = os.path.join(args.build_root, "build-" + project)
     filename = os.path.join(args.archive, f"{project}-{args.buildid}.syms.zip")
 
@@ -281,6 +295,11 @@ def archive_symbols(args, project):
 
 
 def archive(build_config, args):
+    if args.archive is None:
+        return
+
+    mkdir(args.archive)
+
     # Copy the files we care about to the archive directory
     for project in args.project:
         # config-driven archiving
@@ -322,6 +341,9 @@ def archive(build_config, args):
         # copy out symbol files for kernel and apps
         archive_symbols(args, project)
 
+    # create sdk zip
+    assemble_sdk(args)
+
 
 def get_build_deps(project_name, project, project_names, already_built):
     if project_name not in already_built:
@@ -344,7 +366,7 @@ def main(default_config=None):
                         default=os.path.join(top, "build-root"),
                         help="Root of intermediate build directory.")
     parser.add_argument("--archive", type=str, default=None,
-                        help="Location of build results directory.")
+                        help="Location of build artifacts directory. If omitted, no artifacts will be produced.")
     parser.add_argument("--buildid", type=str, help="Server build id")
     parser.add_argument("--jobs", type=str, default=multiprocessing.cpu_count(),
                         help="Max number of build jobs.")
@@ -369,12 +391,7 @@ def main(default_config=None):
                         "build-config file.", default=default_config)
     parser.add_argument("--android", type=str,
                         help="Path to an Android build to run tests against.")
-    parser.add_argument("--sdk", action="store_true", help="Build SDK for all "
-                        "specified projects.")
     args = parser.parse_args()
-
-    if args.archive is None:
-        args.archive = os.path.join(args.build_root, "archive")
 
     build_config = trusty_build_config.TrustyBuildConfig(
         config_file=args.config, android=args.android)
@@ -432,9 +449,6 @@ def main(default_config=None):
     else:
         build(args)
         archive(build_config, args)
-
-    if args.sdk:
-        assemble_sdk(args)
 
     # Run tests
     if not args.skip_tests:

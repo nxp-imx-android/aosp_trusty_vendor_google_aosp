@@ -88,6 +88,17 @@ class TrustyTest(object):
 class TrustyHostTest(TrustyTest):
     """Stores a pair of a test name and a command to run on host."""
 
+    class TrustyHostTestFlags:
+        """Enable needs to be matched with provides without special casing"""
+
+        @staticmethod
+        def match_provide(_):
+            # cause host test to be filtered out if they appear in a boottests
+            # or androidportests environment which provides a set of features.
+            return False
+
+    need = TrustyHostTestFlags()
+
 
 class TrustyAndroidTest(TrustyTest):
     """Stores a test name and command to run inside Android"""
@@ -108,7 +119,7 @@ class TrustyPortTest(TrustyTest):
     """Stores a trusty port name for a test to run."""
 
     def __init__(self, port, enabled=True, timeout=None):
-        super().__init__(None, None, enabled)
+        super().__init__(port, None, enabled)
         self.port = port
         self.need = TrustyPortTestFlags()
         self.timeout = timeout
@@ -116,6 +127,50 @@ class TrustyPortTest(TrustyTest):
     def needs(self, **need):
         self.need.set(**need)
         return self
+
+    def into_androidporttest(self, cmdargs, **kwargs):
+        cmdargs = list(cmdargs)
+        cmd = " ".join(["/vendor/bin/trusty-ut-ctrl", self.port] + cmdargs)
+        return TrustyAndroidTest(self.name, cmd, self.enabled,
+                                 timeout=self.timeout, **kwargs)
+
+    def into_bootporttest(self) -> TrustyTest:
+        cmd = ["run", "--headless", "--boot-test", self.port]
+        cmd += ['--timeout', str(self.timeout)] if self.timeout else []
+        return TrustyTest("boot-test:" + self.port, cmd, self.enabled)
+
+
+class TrustyCommand:
+    """Base class for all types of commands that are *not* tests"""
+
+    def __init__(self, name):
+        self.name = name
+        self.enabled = True
+        # avoids special cases in list_config
+        self.command = []
+        # avoids special cases in porttest_match
+        self.need = TrustyPortTestFlags()
+
+    def needs(self, **_):
+        """Allows commands to be used inside a needs block."""
+        return self
+
+    def into_androidporttest(self, **_):
+        return self
+
+    def into_bootporttest(self):
+        return self
+
+
+class TrustyRebootCommand(TrustyCommand):
+    """Marker object which causes the test environment to be rebooted before the
+       next test is run. Used to reset the test environment and to test storage.
+
+       TODO: The current qemu.py script does a factory reset as part a reboot.
+             We probably want a parameter or separate command to control that.
+    """
+    def __init__(self):
+        super().__init__("reboot command")
 
 
 class TrustyBuildConfig(object):
@@ -213,8 +268,7 @@ class TrustyBuildConfig(object):
                     if isinstance(test, TrustyHostTest)]
 
         def porttest_match(test, provides):
-            return (isinstance(test, TrustyPortTest)
-                    and test.need.match_provide(provides))
+            return test.need.match_provide(provides)
 
         def porttests_filter(tests, provides):
             return [test for test in flatten_list(tests)
@@ -224,27 +278,8 @@ class TrustyBuildConfig(object):
             if provides is None:
                 provides = TrustyPortTestFlags(storage_boot=True,
                                                smp4=True)
-            trusty_tests = []
-            for test in porttests_filter(port_tests, provides):
-                if test.timeout:
-                    timeout_args = ['--timeout', str(test.timeout)]
-                else:
-                    timeout_args = []
-
-                trusty_tests += [TrustyTest("boot-test:" + test.port,
-                                            ["run", "--headless", "--boot-test",
-                                             test.port] + timeout_args,
-                                            test.enabled)]
-            return trusty_tests
-
-        def androidporttest(port, cmdargs, enabled, **kwargs):
-            cmdargs = list(cmdargs)
-            cmd = " ".join(
-                [
-                    "/vendor/bin/trusty-ut-ctrl",
-                    port
-                ] + cmdargs)
-            return TrustyAndroidTest(port, cmd, enabled, **kwargs)
+            return [test.into_bootporttest()
+                    for test in porttests_filter(port_tests, provides)]
 
         def androidporttests(port_tests, provides=None, nameprefix="",
                              cmdargs=(), runargs=()):
@@ -254,10 +289,10 @@ class TrustyBuildConfig(object):
                                                storage_boot=True,
                                                storage_full=True,
                                                smp4=True)
-            return [androidporttest(test.port, enabled=test.enabled,
-                                    timeout=test.timeout,
-                                    nameprefix=nameprefix, cmdargs=cmdargs,
-                                    runargs=runargs)
+
+            return [test.into_androidporttest(nameprefix=nameprefix,
+                                              cmdargs=cmdargs,
+                                              runargs=runargs)
                     for test in porttests_filter(port_tests, provides)]
 
         def needs(tests, *args, **kwargs):
@@ -280,6 +315,7 @@ class TrustyBuildConfig(object):
             "androidtest": TrustyAndroidTest,
             "androidporttests": androidporttests,
             "needs": needs,
+            "reboot": TrustyRebootCommand,
         }
 
         with open(path, encoding="utf8") as f:
@@ -445,6 +481,7 @@ def test_config(args):
 
     print("get_projects test passed")
 
+    reboot_seen = False
     for project_name in config.get_projects():
         project = config.get_project(project_name)
         if args.debug:
@@ -468,15 +505,20 @@ def test_config(args):
             assert False, "Unknown project kind"
 
         for i, test in enumerate(project.tests):
-            host_m = re.match(r"host-test:self_test.*\.(\d+)",
-                              test.name)
-            unit_m = re.match(r"boot-test:self_test.*\.(\d+)",
-                              test.name)
-            if args.debug:
-                print(project, i, test.name)
-            m = host_m or unit_m
-            assert m
-            assert m.group(1) == str(i + 1)
+            match test:
+                case TrustyRebootCommand():
+                    reboot_seen = True
+                case TrustyTest():
+                    host_m = re.match(r"host-test:self_test.*\.(\d+)",
+                                      test.name)
+                    unit_m = re.match(r"boot-test:self_test.*\.(\d+)",
+                                      test.name)
+                    if args.debug:
+                        print(project, i, test.name)
+                    m = host_m or unit_m
+                    assert m
+                    assert m.group(1) == str(i + 1)
+    assert reboot_seen
 
     print("get_tests test passed")
 

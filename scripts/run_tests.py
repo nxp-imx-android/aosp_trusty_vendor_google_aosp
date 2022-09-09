@@ -171,14 +171,20 @@ def run_tests(build_config, root, project, run_disabled_tests=False,
                 test_runner = None
                 try:
                     test_env = load_test_environment()
-                    test_runner = test_env.init(android=build_config.android,
+                    test_runner = test_env.init(android=
+                                                build_config.android,
                                                 disable_rpmb=disable_rpmb,
                                                 verbose=verbose,
-                                                debug_on_error=debug_on_error)
+                                                debug_on_error=
+                                                debug_on_error)
                     status = test_env.run_test(test_runner, cmd)
                 finally:
                     if test_env:
                         test_env.shutdown(test_runner)
+            case trusty_build_config.TrustyRebootCommand():
+                # ignore reboot commands since we are not (yet) batching
+                # tests such that they can share an emulator instance.
+                return
             case _:
                 raise NotImplementedError(f"Don't know how to run {test.name}")
 

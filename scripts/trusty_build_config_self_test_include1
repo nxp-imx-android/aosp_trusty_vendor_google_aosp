@@ -49,6 +49,8 @@
                 porttest("self_test.c.1"),
                 porttest("self_test.a.2"),
                 porttest("self_test.b.3"),
+                hosttest("self_test.d.4"),
+                reboot(),
             ]),
         ],
     ),

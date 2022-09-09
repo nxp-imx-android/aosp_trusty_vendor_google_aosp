@@ -31,11 +31,11 @@ import importlib
 import subprocess
 import sys
 import time
-from typing import Optional
+from typing import List, Optional
 
 from trusty_build_config import TrustyTest, TrustyCompositeTest
 from trusty_build_config import TrustyRebootCommand, TrustyHostTest
-from trusty_build_config import TrustyBuildConfig
+from trusty_build_config import TrustyAndroidTest, TrustyBuildConfig
 
 
 class TestResults(object):
@@ -132,6 +132,8 @@ def run_tests(build_config, root, project, run_disabled_tests=False,
     project_root = f"{root}/build-{project}"
 
     test_results = TestResults(project)
+    test_env = None
+    test_runner = None
 
     def load_test_environment():
         sys.path.append(project_root)
@@ -148,8 +150,18 @@ def run_tests(build_config, root, project, run_disabled_tests=False,
 
         return run
 
-    def run_test(test, parent_test: Optional[TrustyCompositeTest] = None) -> int:
+    def print_test_command(name, cmd: Optional[List[str]] = None):
+        print()
+        print("Running", name, "on", test_results.project)
+        if cmd:
+            print("Command line:",
+                  " ".join([s.replace(" ", "\\ ") for s in cmd]))
+        sys.stdout.flush()
+
+    def run_test(test, parent_test: Optional[TrustyCompositeTest] = None
+                 ) -> int:
         """Execute a single test and print out helpful information"""
+        nonlocal test_env, test_runner
         cmd = test.command[1:]
         disable_rpmb = True if "--disable_rpmb" in cmd else None
 
@@ -161,9 +173,7 @@ def run_tests(build_config, root, project, run_disabled_tests=False,
             case TrustyHostTest():
                 # append nice and expand path to command
                 cmd = ["nice", f"{project_root}/{test.command[0]}"] + cmd
-                print("Command line:",
-                      " ".join([s.replace(" ", "\\ ") for s in cmd]),
-                      flush=True)
+                print_test_command(test.name, cmd)
                 status = subprocess.call(cmd)
             case TrustyCompositeTest():
                 status = 0
@@ -173,29 +183,28 @@ def run_tests(build_config, root, project, run_disabled_tests=False,
                         # the first failing subtest
                         break
             case TrustyTest():
-                if hasattr(test, "shell_command"):
-                    print("Command line:",
-                          test.shell_command.replace(" ", "\\ "),
-                          flush=True)
+                if isinstance(test, TrustyAndroidTest):
+                    print_test_command(test.name, [test.shell_command])
+                else:
+                    # port tests are identified by their port name, no command
+                    print_test_command(test.name)
 
-                test_env = None
-                test_runner = None
-                try:
+                if not test_env:
                     test_env = load_test_environment()
-                    test_runner = test_env.init(android=
-                                                build_config.android,
+                if not test_runner:
+                    test_runner = test_env.init(android=build_config.android,
                                                 disable_rpmb=disable_rpmb,
                                                 verbose=verbose,
-                                                debug_on_error=
-                                                debug_on_error)
-                    status = test_env.run_test(test_runner, cmd)
-                finally:
-                    if test_env:
-                        test_env.shutdown(test_runner)
+                                                debug_on_error=debug_on_error)
+                status = test_env.run_test(test_runner, cmd)
             case TrustyRebootCommand() if parent_test:
                 assert isinstance(parent_test, TrustyCompositeTest)
-                # ignore reboot commands since we are not (yet) batching
-                # tests such that they can share an emulator instance.
+                if test_env:
+                    test_env.shutdown(test_runner)
+                    test_runner = None
+                    print("Shut down test environment on", test_results.project)
+                # return early so we do not report the time to reboot or try to
+                # add the reboot command to test results.
                 return 0
             case TrustyRebootCommand():
                 raise RuntimeError(
@@ -208,13 +217,21 @@ def run_tests(build_config, root, project, run_disabled_tests=False,
         test_results.add_result(test.name, status == 0)
         return status
 
-    for test in project_config.tests:
-        if not test.enabled and not run_disabled_tests:
-            continue
-        if not test_should_run(test.name, test_filter):
-            continue
+    try:
+        for test in project_config.tests:
+            if not test.enabled and not run_disabled_tests:
+                continue
+            if not test_should_run(test.name, test_filter):
+                continue
 
-        run_test(test)
+            run_test(test)
+    finally:
+        # finally is used here to make sure that we attempt to shutdown the
+        # test environment no matter whether an exception was raised or not
+        # and no matter what kind of test caused an exception to be raised.
+        if test_env:
+            test_env.shutdown(test_runner)
+        # any saved exception from the try block will be re-raised here
 
     return test_results
 

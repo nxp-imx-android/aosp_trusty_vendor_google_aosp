@@ -9,6 +9,7 @@ DEPS=(
   libssl-dev
   libusb-1.0-0-dev
   pkg-config
+  pylint
   xxd
 )
 

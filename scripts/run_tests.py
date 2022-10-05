@@ -127,26 +127,9 @@ def run_tests(build_config, root, project, run_disabled_tests=False,
     test_failed = []
     test_passed = []
 
-    for test in project_config.tests:
-        name = test.name
-        if not test.enabled and not run_disabled_tests:
-            continue
-        if not test_should_run(name, test_filter):
-            continue
-        project_root = root + "/build-" + project + "/"
-        runargs = []
-        runargs += test.runargs
-        timeout = test.timeout
-        if timeout:
-            runargs += (['--timeout', str(timeout)])
-        if verbose:
-            runargs += (["--verbose"])
-        if debug_on_error:
-            runargs += (["--debug-on-error"])
-        cmd = test.cmd_prefix(project_root)
-        test_cmd, test_args = test.cmd_test_option()
-        cmd += test_cmd + test_args + runargs
-        print("\nRunning", name, "on", project)
+    def run_test(name, cmd):
+        print()
+        print("Running", name, "on", project)
         print("Command line:", " ".join([s.replace(" ", "\\ ") for s in cmd]))
         sys.stdout.flush()
         test_start_time = time.time()
@@ -156,6 +139,17 @@ def run_tests(build_config, root, project, run_disabled_tests=False,
             name, status, test_run_time))
         test_results.add_result(name, status == 0)
         (test_failed if status else test_passed).append(name)
+
+    for test in project_config.tests:
+        if not test.enabled and not run_disabled_tests:
+            continue
+        if not test_should_run(test.name, test_filter):
+            continue
+        project_root = root + "/build-" + project + "/"
+        cmd = (["nice", project_root + test.command[0]] + test.command[1:]
+               + (["--verbose"] if verbose else [])
+               + (["--debug-on-error"] if debug_on_error else []))
+        run_test(name=test.name, cmd=cmd)
 
     return test_results
 

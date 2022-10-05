@@ -24,6 +24,7 @@
 import argparse
 import os
 import re
+from typing import List
 
 script_dir = os.path.dirname(os.path.abspath(__file__))
 
@@ -173,6 +174,37 @@ class TrustyRebootCommand(TrustyCommand):
         super().__init__("reboot command")
 
 
+class TrustyCompositeTest(TrustyTest):
+    """Stores a sequence of tests that must execute in order"""
+
+    def __init__(self, name: str,
+                 sequence: List[TrustyPortTest | TrustyCommand],
+                 enabled=True):
+        super().__init__(name, [], enabled)
+        self.sequence = sequence
+        flags = set()
+        for subtest in sequence:
+            flags.update(subtest.need.flags)
+        self.need = TrustyPortTestFlags(**{flag: True for flag in flags})
+
+    def needs(self, **need):
+        self.need.set(**need)
+        return self
+
+    def into_androidporttest(self, **kwargs):
+        # because the needs of the composite test is the union of the needs of
+        # its subtests, we do not need to filter out any subtests; all needs met
+        self.sequence = [subtest.into_androidporttest(**kwargs)
+                         for subtest in self.sequence]
+        return self
+
+    def into_bootporttest(self):
+        # similarly to into_androidporttest, we do not need to filter out tests
+        self.sequence = [subtest.into_bootporttest()
+                         for subtest in self.sequence]
+        return self
+
+
 class TrustyBuildConfig(object):
     """Trusty build and test configuration file parser."""
 
@@ -309,6 +341,7 @@ class TrustyBuildConfig(object):
             "testmap": testmap,
             "hosttest": hosttest,
             "porttest": TrustyPortTest,
+            "compositetest": TrustyCompositeTest,
             "porttestflags": TrustyPortTestFlags,
             "hosttests": hosttests,
             "boottests": boottests,
@@ -482,6 +515,32 @@ def test_config(args):
     print("get_projects test passed")
 
     reboot_seen = False
+
+    def check_test(i, test):
+        match test:
+            case TrustyTest():
+                host_m = re.match(r"host-test:self_test.*\.(\d+)",
+                                  test.name)
+                unit_m = re.match(r"boot-test:self_test.*\.(\d+)",
+                                  test.name)
+                if args.debug:
+                    print(project, i, test.name)
+                m = host_m or unit_m
+                assert m
+                assert m.group(1) == str(i + 1)
+            case TrustyRebootCommand():
+                assert False, "Reboot outside composite command"
+            case _:
+                assert False, "Unexpected test type"
+
+    def check_subtest(i, test):
+        nonlocal reboot_seen
+        match test:
+            case TrustyRebootCommand():
+                reboot_seen = True
+            case _:
+                check_test(i, test)
+
     for project_name in config.get_projects():
         project = config.get_project(project_name)
         if args.debug:
@@ -506,18 +565,15 @@ def test_config(args):
 
         for i, test in enumerate(project.tests):
             match test:
-                case TrustyRebootCommand():
-                    reboot_seen = True
-                case TrustyTest():
-                    host_m = re.match(r"host-test:self_test.*\.(\d+)",
-                                      test.name)
-                    unit_m = re.match(r"boot-test:self_test.*\.(\d+)",
-                                      test.name)
-                    if args.debug:
-                        print(project, i, test.name)
-                    m = host_m or unit_m
-                    assert m
-                    assert m.group(1) == str(i + 1)
+                case TrustyCompositeTest():
+                    # because one of its subtest needs storage_boot,
+                    # the composite test should similarly need it
+                    assert "storage_boot" in test.need.flags
+                    for subtest in test.sequence:
+                        check_subtest(i, subtest)
+                case _:
+                    check_test(i, test)
+
     assert reboot_seen
 
     print("get_tests test passed")

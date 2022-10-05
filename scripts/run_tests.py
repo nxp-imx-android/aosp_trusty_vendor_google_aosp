@@ -31,8 +31,12 @@ import importlib
 import subprocess
 import sys
 import time
+from typing import Optional
 
-import trusty_build_config
+from trusty_build_config import TrustyTest, TrustyCompositeTest
+from trusty_build_config import TrustyRebootCommand, TrustyHostTest
+from trusty_build_config import TrustyBuildConfig
+
 
 class TestResults(object):
     """Stores test results.
@@ -144,7 +148,7 @@ def run_tests(build_config, root, project, run_disabled_tests=False,
 
         return run
 
-    def run_test(test):
+    def run_test(test, parent_test: Optional[TrustyCompositeTest] = None) -> int:
         """Execute a single test and print out helpful information"""
         cmd = test.command[1:]
         disable_rpmb = True if "--disable_rpmb" in cmd else None
@@ -154,14 +158,21 @@ def run_tests(build_config, root, project, run_disabled_tests=False,
         test_start_time = time.time()
 
         match test:
-            case trusty_build_config.TrustyHostTest():
+            case TrustyHostTest():
                 # append nice and expand path to command
                 cmd = ["nice", f"{project_root}/{test.command[0]}"] + cmd
                 print("Command line:",
                       " ".join([s.replace(" ", "\\ ") for s in cmd]),
                       flush=True)
                 status = subprocess.call(cmd)
-            case trusty_build_config.TrustyTest():
+            case TrustyCompositeTest():
+                status = 0
+                for subtest in test.sequence:
+                    if status := run_test(subtest, test):
+                        # fail the composite test with the same status code as
+                        # the first failing subtest
+                        break
+            case TrustyTest():
                 if hasattr(test, "shell_command"):
                     print("Command line:",
                           test.shell_command.replace(" ", "\\ "),
@@ -181,16 +192,21 @@ def run_tests(build_config, root, project, run_disabled_tests=False,
                 finally:
                     if test_env:
                         test_env.shutdown(test_runner)
-            case trusty_build_config.TrustyRebootCommand():
+            case TrustyRebootCommand() if parent_test:
+                assert isinstance(parent_test, TrustyCompositeTest)
                 # ignore reboot commands since we are not (yet) batching
                 # tests such that they can share an emulator instance.
-                return
+                return 0
+            case TrustyRebootCommand():
+                raise RuntimeError(
+                    "Reboot may only be used inside compositetest")
             case _:
                 raise NotImplementedError(f"Don't know how to run {test.name}")
 
         elapsed = time.time() - test_start_time
         print(f"{test.name:s} returned {status:d} after {elapsed:.3f} seconds")
         test_results.add_result(test.name, status == 0)
+        return status
 
     for test in project_config.tests:
         if not test.enabled and not run_disabled_tests:
@@ -211,7 +227,7 @@ def main():
                         help="Project to test.")
     args = parser.parse_args()
 
-    build_config = trusty_build_config.TrustyBuildConfig()
+    build_config = TrustyBuildConfig()
     test_results = run_tests(build_config, args.root, args.project)
     test_results.print_results()
     if not test_results.passed:

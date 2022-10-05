@@ -41,13 +41,27 @@
 #         tests=[
 #             # Run a program on the host
 #             hosttest("some_host_binary"),
-#             # Use test-runner to activate a Trusty IPC port
-#             boottest("port.under.test"),
-#             # Use Android to activate a Trusty IPC port
-#             androidport("port.under.test"),
+#             # Run test on device or in emulator. Porttests run in one of two
+#             # contexts:
+#             # 1. In a minimal
+#             #    bootloader environment (when porttest is nested within
+#             #    in a boottests element), or
+#             # 2. with a full Android userspace present (when nested within an
+#             #    androidporttests element).
+#             porttest("port.under.test"),
 #             # Run a shell command inside Android
 #             androidtest(name="test_name", command="command to run"),
-#             ...
+#             # Run a sequence of test and commands in the given order
+#             # Ensure that test environment is rebooted before second port test
+#             compositetest(name="testname", sequence=[
+#                 hosttest("some_host_binary"),
+#                 porttest("port.under.test"),
+#                 # a reboot may only be requested inside composite tests
+#                 reboot(),
+#                 porttest("another.port.under.test"),
+#                 ...
+#              ]
+#            ...
 #         ],
 #     ),
 #     ...

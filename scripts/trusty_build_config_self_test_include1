@@ -49,8 +49,14 @@
                 porttest("self_test.c.1"),
                 porttest("self_test.a.2"),
                 porttest("self_test.b.3"),
-                hosttest("self_test.d.4"),
-                reboot(),
+                hosttest("self_test.d.5"),
+                compositetest(
+                    name="self_test.composite.a",
+                    sequence=[
+                        porttest("self_test.a.4").needs(storage_boot=True),
+                        reboot(),
+                    ],
+                ),
             ]),
         ],
     ),

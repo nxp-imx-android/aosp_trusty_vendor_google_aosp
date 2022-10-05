@@ -88,14 +88,12 @@ class TrustyTest(object):
 class TrustyHostTest(TrustyTest):
     """Stores a pair of a test name and a command to run on host."""
 
-    pass
-
 
 class TrustyPortTest(TrustyTest):
     """Stores a trusty port name for a test to run."""
 
     def __init__(self, port, enabled=True, timeout=None):
-        super(TrustyPortTest, self).__init__(None, None, enabled)
+        super().__init__(None, None, enabled)
         self.port = port
         self.need = TrustyPortTestFlags()
         self.timeout = timeout
@@ -129,7 +127,7 @@ class TrustyBuildConfig(object):
         if optional and not os.path.exists(path):
             if self.debug:
                 print("Skipping optional config file:", path)
-            return
+            return []
 
         if self.debug:
             print("Reading config file:", path)
@@ -288,7 +286,7 @@ class TrustyBuildConfig(object):
             "needs": needs,
         }
 
-        with open(path) as f:
+        with open(path, encoding="utf8") as f:
             code = compile(f.read(), path, "eval")
             config = eval(code, file_format)  # pylint: disable=eval-used
             return flatten_list(config)
@@ -320,7 +318,8 @@ class TrustyBuildConfig(object):
                     (have_tests is None or
                      have_tests == bool(project.tests)))
 
-        return filter(match, sorted(self.projects.keys()))
+        return (project for project in sorted(self.projects.keys())
+                if match(project))
 
 
 def list_projects(args):
@@ -373,7 +372,7 @@ def any_test_name(regex, tests):
         regex: Regular expression to check them for (as a string)
     """
 
-    return any([re.match(regex, test.name) is not None for test in tests])
+    return any(re.match(regex, test.name) is not None for test in tests)
 
 
 def has_host(tests):
@@ -470,7 +469,7 @@ def test_config(args):
             assert not has_host(project.tests)
             assert not has_unit(project.tests)
         else:
-            assert False or "Unknown project kind"
+            assert False, "Unknown project kind"
 
         for i, test in enumerate(project.tests):
             host_m = re.match(r"host-test:self_test.*\.(\d+)",

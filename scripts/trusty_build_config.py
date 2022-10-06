@@ -419,7 +419,7 @@ def test_config(args):
     for build in [None, True, False]:
         projects_build[build] = {}
         for tested in [None, True, False]:
-            projects = config.get_projects(build=build, have_tests=tested)
+            projects = list(config.get_projects(build=build, have_tests=tested))
             projects_build[build][tested] = projects
             if args.debug:
                 print("Build", build, "tested", tested, "count", len(projects))

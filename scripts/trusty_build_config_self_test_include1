@@ -45,9 +45,11 @@
             "self_test.build_yes.tests_unit.1m.2i.test_unit",
         ],
         tests=[
-            boottest("self_test.c.1"),
-            boottest("self_test.a.2"),
-            boottest("self_test.b.3"),
+            boottests([
+                porttest("self_test.c.1"),
+                porttest("self_test.a.2"),
+                porttest("self_test.b.3"),
+            ]),
         ],
     ),
     testmap(
@@ -56,11 +58,14 @@
         ],
         tests=[
             hosttest("self_test.1"),
-            boottest("self_test.2"),
-            boottest("self_test.3"),
-            boottest("self_test.4"),
+            boottests([
+                porttest("self_test.2"),
+                porttest("self_test.3"),
+                porttest("self_test.4"),
+            ]),
+            include("./trusty_build_config_self_test_include_none", optional=True),
         ],
     ),
 
-    include("trusty_build_config_self_test_include2"),
+    include("./trusty_build_config_self_test_include2"),
 ]

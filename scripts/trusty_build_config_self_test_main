@@ -38,6 +38,6 @@
         ],
         enabled=False
     ),
-    include("trusty_build_config_self_test_include1", optional=True),
-    include("trusty_build_config_self_test_include_none", optional=True),
+    include("./trusty_build_config_self_test_include1", optional=True),
+    include("./trusty_build_config_self_test_include_none", optional=True),
 ]

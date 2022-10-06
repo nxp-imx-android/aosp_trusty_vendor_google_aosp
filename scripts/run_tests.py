@@ -1,5 +1,4 @@
 #!/bin/sh
-"." "`dirname $0`/envsetup.sh"; "exec" "$PY3" "$0" "$@"
 #
 # Copyright (C) 2018 The Android Open Source Project
 #
@@ -20,7 +19,12 @@
 # It is supposed to be executed from trusty root directory
 # and expects the following environment variables:
 #
-"""Run tests for a project."""
+""":" # Shell script (in docstring to appease pylint)
+# Find and invoke hermetic python3 interpreter
+. "`dirname $0`/envsetup.sh"; exec "$PY3" "$0" "$@"
+# Shell script end
+Run tests for a project.
+"""
 
 import argparse
 import subprocess
@@ -69,21 +73,20 @@ class TestResults(object):
             out = sys.stdout
         test_count = self.passed_count + self.failed_count
         out.write("\n"
-                  "Ran {} tests for project {}.\n".format(
-                      test_count, self.project))
+                  f"Ran {test_count} tests for project {self.project}.\n")
         if test_count:
             for test, passed in self.test_results:
                 if passed:
                     if not print_failed_only:
-                        out.write("[ {:>8} ] {}\n".format("OK", test))
+                        out.write(f"[ {'OK':>8} ] {test}\n")
                 else:
-                    out.write("[ {:^8} ] {}\n".format("FAILED", test))
-            out.write("[==========] {} tests ran for project {}.\n".format(
-                test_count, self.project))
+                    out.write(f"[ {'FAILED':^8} ] {test}\n")
+            out.write(f"[==========] {test_count} tests ran for project "
+                      f"{self.project}.\n")
             if self.passed_count and not print_failed_only:
-                out.write("[  PASSED  ] {} tests.\n".format(self.passed_count))
+                out.write(f"[  PASSED  ] {self.passed_count} tests.\n")
             if self.failed_count:
-                out.write("[  FAILED  ] {} tests.\n".format(self.failed_count))
+                out.write(f"[  FAILED  ] {self.failed_count} tests.\n")
 
 
 def test_should_run(testname, test_filter):
@@ -135,8 +138,7 @@ def run_tests(build_config, root, project, run_disabled_tests=False,
         test_start_time = time.time()
         status = subprocess.call(cmd)
         test_run_time = time.time() - test_start_time
-        print("{:s} returned {:d} after {:.3f} seconds".format(
-            name, status, test_run_time))
+        print(f"{name:s} returned {status:d} after {test_run_time:.3f} seconds")
         test_results.add_result(name, status == 0)
         (test_failed if status else test_passed).append(name)
 

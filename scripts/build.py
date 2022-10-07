@@ -1,5 +1,4 @@
 #!/bin/sh
-"." "`dirname $0`/envsetup.sh"; "exec" "$PY3" "$0" "$@"
 #
 # Copyright (C) 2018 The Android Open Source Project
 #
@@ -15,7 +14,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-"""Invoke trusty build system and run tests."""
+""":" # Shell script (in docstring to appease pylint)
+# Find and invoke hermetic python3 interpreter
+. "`dirname $0`/envsetup.sh"; exec "$PY3" "$0" "$@"
+# Shell script end
+
+Invoke trusty build system and run tests.
+"""
 
 import argparse
 import getpass
@@ -47,11 +52,11 @@ def get_new_build_id(build_root):
     """Increment build-id file and return new build-id number."""
     path = os.path.join(build_root, "BUILDID")
     try:
-        with open(path, "r") as f:
+        with open(path, "r", encoding="utf-8") as f:
             num = int(f.read()) + 1
     except IOError:
         num = 1
-    with open(path, "w") as f:
+    with open(path, "w", encoding="utf-8") as f:
         f.write(str(num))
         f.truncate()
         # Return buildid string: <user>@<hostname>-<num>
@@ -122,36 +127,38 @@ def is_child_of_any(path, possible_parents):
     return False
 
 
-def archive_dir(archive, src, dest, omit=[]):
+def archive_dir(zip_archive, src, dest, omit=()):
     """Recursively add a directory to a ZIP file.
 
     Recursively add the src directory to the ZIP with dest path inside the
     archive.
 
     Args:
-       archive: A ZipFile opened for append or write.
+       zip_archive: A ZipFile opened for append or write.
        src: Source directory to add to the archive.
        dest: Destination path inside the archive (must be a relative path).
-       omit: List of directorys to omit from the archive. Specified as relative paths from `src`.
+       omit: List of directorys to omit from the archive. Specified as relative
+           paths from `src`.
     """
-    for root, dirs, files in os.walk(src):
+    for root, _dirs, files in os.walk(src):
         rel_root = os.path.relpath(root, start=src)
         if is_child_of_any(rel_root, omit):
             continue
 
         for f in files:
             file_path = os.path.join(root, f)
-            archive_dest = os.path.join(dest, os.path.relpath(file_path, start=src))
-            archive.write(file_path, archive_dest)
+            archive_dest = os.path.join(dest, os.path.relpath(file_path,
+                                                              start=src))
+            zip_archive.write(file_path, archive_dest)
 
-def archive_file(archive, src_file, dest_dir="", optional=False):
+def archive_file(zip_archive, src_file, dest_dir="", optional=False):
     """Add a file to a ZIP file.
 
     Adds src_file to archive in the directory dest_dir, relative to the root of
     the archive.
 
     Args:
-       archive: A ZipFile opened for append or write.
+       zip_archive: A ZipFile opened for append or write.
        src_file: Source file to add to the archive.
        dest_dir: Relative destination path in the archive for this file.
        optional: Optional boolean argument. If True don't exit if source file
@@ -159,7 +166,8 @@ def archive_file(archive, src_file, dest_dir="", optional=False):
     """
     if not os.path.exists(src_file) and optional:
         return
-    archive.write(src_file, os.path.join(dest_dir, os.path.basename(src_file)))
+    zip_archive.write(src_file,
+                      os.path.join(dest_dir, os.path.basename(src_file)))
 
 
 def assemble_sdk(args):
@@ -168,7 +176,8 @@ def assemble_sdk(args):
     with ZipFile(filename, 'a', compression=ZIP_DEFLATED) as sdk_archive:
         print("Building SDK archive ZIP...")
         for project in args.project:
-            project_buildroot = os.path.join(args.build_root, "build-" + project)
+            project_buildroot = os.path.join(args.build_root,
+                                             "build-" + project)
 
             project_sysroot_dir = os.path.join("sysroots", project, "usr")
             src = os.path.join(project_buildroot, "sdk", "sysroot", "usr")
@@ -181,15 +190,18 @@ def assemble_sdk(args):
             src = os.path.join(project_buildroot, "sdk", "make")
             archive_dir(sdk_archive, src, project_makefile_dir)
 
-            src = os.path.join(project_buildroot, "host_tools", "apploader_package_tool")
+            src = os.path.join(project_buildroot, "host_tools",
+                               "apploader_package_tool")
             archive_file(sdk_archive, src, "tools", optional=True)
 
-            src = os.path.join(project_buildroot, "sdk", "tools", "manifest_compiler.py")
+            src = os.path.join(project_buildroot, "sdk", "tools",
+                               "manifest_compiler.py")
             archive_file(sdk_archive, src, "tools")
 
         # Add AOSP qemu dev signing key.
         for filename in DEV_SIGNING_KEY_FILES:
-            archive_file(sdk_archive, os.path.join(DEV_SIGNING_KEY_PATH, filename), "tools")
+            archive_file(sdk_archive,
+                         os.path.join(DEV_SIGNING_KEY_PATH, filename), "tools")
 
         # Copy the app makefile
         archive_file(sdk_archive, TRUSTED_APP_MAKEFILE_PATH, "make")
@@ -200,11 +212,15 @@ def assemble_sdk(args):
         archive_file(sdk_archive, SDK_README_PATH)
 
         # Add clang version info
-        cmd = f"source {os.path.join(script_dir, 'envsetup.sh')} && echo $CLANG_BINDIR"
-        clang_bindir = subprocess.check_output(cmd, shell=True, executable="/bin/bash").decode().strip()
+        envsetup = os.path.join(script_dir, 'envsetup.sh')
+        cmd = f"source {envsetup} && echo $CLANG_BINDIR"
+        clang_bindir = subprocess.check_output(
+            cmd, shell=True, executable="/bin/bash").decode().strip()
         clang_dir = os.path.join(clang_bindir, "../")
-        archive_file(sdk_archive, os.path.join(clang_dir, "AndroidVersion.txt"), "clang")
-        archive_file(sdk_archive, os.path.join(clang_dir, "clang_source_info.md"), "clang")
+        archive_file(sdk_archive,
+                     os.path.join(clang_dir, "AndroidVersion.txt"), "clang")
+        archive_file(sdk_archive,
+                     os.path.join(clang_dir, "clang_source_info.md"), "clang")
 
         # Add trusty version info
         sdk_archive.writestr("Version.txt", args.buildid)
@@ -226,8 +242,8 @@ def build(args):
         cmd += "; export BUILDID=" + args.buildid
         cmd += "; nice make " + project + " -j " + str(args.jobs)
         # Call envsetup.  If it fails, abort.
-        cmd = "source %s && (%s)" % (os.path.join(script_dir, "envsetup.sh"),
-                                     cmd)
+        envsetup = os.path.join(script_dir, "envsetup.sh")
+        cmd = f"source {envsetup:s} && ({cmd:s})"
         status = subprocess.call(cmd, shell=True, executable="/bin/bash")
         print("cmd: '" + cmd + "' returned", status)
         if status:
@@ -240,39 +256,40 @@ def build(args):
         sys.exit(1)
 
 
-def zip_dir(archive, src, dest, filter=lambda _: True):
+def zip_dir(zip_archive, src, dest, filterfunc=lambda _: True):
     """Recursively add a directory to a ZIP file.
 
     Recursively add the src directory to the ZIP with dest path inside the
     archive.
 
     Args:
-       archive: A ZipFile opened for append or write.
+       zip_archive: A ZipFile opened for append or write.
        src: Source directory to add to the archive.
        dest: Destination path inside the archive (must be a relative path).
     """
     for root, _dirs, files in os.walk(src):
         for f in files:
-            if not filter(f):
+            if not filterfunc(f):
                 continue
             file_path = os.path.join(root, f)
             archive_dest = os.path.join(dest,
                                         os.path.relpath(file_path, start=src))
-            archive.write(file_path, archive_dest)
+            zip_archive.write(file_path, archive_dest)
 
 
-def zip_file(archive, src_file, dest_dir=""):
+def zip_file(zip_archive, src_file, dest_dir=""):
     """Add a file to a ZIP file.
 
     Adds src_file to archive in the directory dest_dir, relative to the root of
     the archive.
 
     Args:
-       archive: A ZipFile opened for append or write.
+       zip_archive: A ZipFile opened for append or write.
        src_file: Source file to add to the archive.
        dest_dir: Relative destination path in the archive for this file.
     """
-    archive.write(src_file, os.path.join(dest_dir, os.path.basename(src_file)))
+    zip_archive.write(src_file,
+                      os.path.join(dest_dir, os.path.basename(src_file)))
 
 
 def archive_symbols(args, project):
@@ -280,18 +297,19 @@ def archive_symbols(args, project):
     proj_buildroot = os.path.join(args.build_root, "build-" + project)
     filename = os.path.join(args.archive, f"{project}-{args.buildid}.syms.zip")
 
-    with ZipFile(filename, 'a', compression=ZIP_DEFLATED) as archive:
+    with ZipFile(filename, 'a', compression=ZIP_DEFLATED) as zip_archive:
         print("Archiving symbols in " + os.path.relpath(filename, args.archive))
 
         # archive the kernel elf file
-        zip_file(archive, os.path.join(proj_buildroot, "lk.elf"))
+        zip_file(zip_archive, os.path.join(proj_buildroot, "lk.elf"))
 
         # archive the kernel symbols
-        zip_file(archive, os.path.join(proj_buildroot, "lk.elf.sym"))
-        zip_file(archive, os.path.join(proj_buildroot, "lk.elf.sym.sorted"))
+        zip_file(zip_archive, os.path.join(proj_buildroot, "lk.elf.sym"))
+        zip_file(zip_archive, os.path.join(proj_buildroot, "lk.elf.sym.sorted"))
 
         # archive path/to/app.syms.elf for each trusted app
-        zip_dir(archive, proj_buildroot, "", lambda f: f.endswith("syms.elf"))
+        zip_dir(zip_archive, proj_buildroot, "",
+                lambda f: f.endswith("syms.elf"))
 
 
 def archive(build_config, args):
@@ -327,10 +345,12 @@ def archive(build_config, args):
         archive_build_file(args, project, "lk.bin")
 
         # copy out qemu package if it exists
-        archive_build_file(args, project, "trusty_qemu_package.zip", optional=True)
+        archive_build_file(args, project, "trusty_qemu_package.zip",
+                           optional=True)
 
         # copy out test package if it exists
-        archive_build_file(args, project, "trusty_test_package.zip", optional=True)
+        archive_build_file(args, project, "trusty_test_package.zip",
+                           optional=True)
 
         # export the app package tool for use in the SDK. This can go away once
         # all the SDK patches have landed, as the tool will be packaged in the
@@ -366,7 +386,8 @@ def main(default_config=None):
                         default=os.path.join(top, "build-root"),
                         help="Root of intermediate build directory.")
     parser.add_argument("--archive", type=str, default=None,
-                        help="Location of build artifacts directory. If omitted, no artifacts will be produced.")
+                        help="Location of build artifacts directory. If "
+                        "omitted, no artifacts will be produced.")
     parser.add_argument("--buildid", type=str, help="Server build id")
     parser.add_argument("--jobs", type=str, default=multiprocessing.cpu_count(),
                         help="Max number of build jobs.")
@@ -411,8 +432,7 @@ def main(default_config=None):
         if skip in projects:
             projects.remove(skip)
         else:
-            sys.stderr.write(
-                "ERROR unknown project --skip-project={}\n".format(skip))
+            sys.stderr.write(f"ERROR unknown project --skip-project={skip}\n")
             ok = False
     if not ok:
         sys.exit(1)
@@ -429,7 +449,7 @@ def main(default_config=None):
                 if run_tests.test_should_run(test.name, args.test):
                     return True
             return False
-        projects = filter(has_test, projects)
+        projects = [project for project in projects if has_test(project)]
 
     # find build dependencies
     projects_old = projects
@@ -482,11 +502,11 @@ def main(default_config=None):
 
         sys.stdout.write("\n")
         if projects_passed:
-            sys.stdout.write("[  PASSED  ] {} tests in {} projects.\n".format(
-                tests_passed, projects_passed))
+            sys.stdout.write(f"[  PASSED  ] {tests_passed} tests in "
+                             f"{projects_passed} projects.\n")
         if projects_failed:
-            sys.stdout.write("[  FAILED  ] {} tests in {} projects.\n".format(
-                tests_failed, projects_failed))
+            sys.stdout.write(f"[  FAILED  ] {tests_failed} tests in "
+                             f"{projects_failed} projects.\n")
             sys.stdout.flush()
 
             # Print the failed tests again to stderr as the build server will
@@ -497,8 +517,8 @@ def main(default_config=None):
             # at the bottom of that file.
             for test_result in test_results:
                 test_result.print_results(print_failed_only=True)
-            sys.stderr.write("[  FAILED  ] {} tests in {} projects.\n".format(
-                tests_failed, projects_failed))
+            sys.stderr.write(f"[  FAILED  ] {tests_failed,} tests in "
+                             f"{projects_failed} projects.\n")
 
         if test_failed:
             sys.exit(1)

@@ -3,7 +3,21 @@
 set -e
 set -u
 
-DEPS=(libpixman-1-dev libstdc++-8-dev pkg-config libglib2.0-dev libusb-1.0-0-dev libssl-dev)
+DEPS=(
+  libglib2.0-dev
+  libpixman-1-dev
+  libssl-dev
+  libusb-1.0-0-dev
+  pkg-config
+  xxd
+)
+
+if !(echo ${DEPS[@]} | tr " " "\n" | sort --check); then
+  echo
+  echo "WARNING DEPS is not sorted:"
+  echo ${DEPS[@]}
+  echo
+fi
 
 if dpkg -V ${DEPS[@]}; then
   echo "System dependencies appear to be installed."

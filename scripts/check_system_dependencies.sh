@@ -8,6 +8,7 @@ DEPS=(
   libpixman-1-dev
   libssl-dev
   libusb-1.0-0-dev
+  mypy
   pkg-config
   pylint
   xxd

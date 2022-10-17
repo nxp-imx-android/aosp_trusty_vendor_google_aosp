@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
 from signal import SIGINT
-import psutil
-import sys
 import argparse
+import sys
+import psutil  # type: ignore
 
 
 def find_vscode_process(current_process):

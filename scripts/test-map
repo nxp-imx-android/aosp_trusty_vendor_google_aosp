@@ -338,26 +338,28 @@
                                 "VtsHalGatekeeperV1_0TargetTest/"
                                 "VtsHalGatekeeperV1_0TargetTest"),
 
-            # Test RPK
-            androidtest(name="vts:rpk",
-                        command="setprop ro.boot.verifiedbootstate fake"
-                                "&&"
-                                "/data/nativetest64/"
-                                "VtsHalRemotelyProvisionedComponentTargetTest/"
-                                "VtsHalRemotelyProvisionedComponentTargetTest"
-                                " --gtest_filter=\""
-                                "-"
-                                # We can not satisfy the requirements of
-                                # prodMode attestation.
-                                "*.generateAndUseEcdsaP256Key_prodMode/*:"
-                                # TODO:
-                                # bootloader/test-runner/test-runner.c in
-                                # trusty/external/trusty needs to properly set
-                                # the boot flags for the following tests to pass
-                                "*.EmptyRequest_testMode/*:"
-                                "*.NewKeyPerCallInTestMode/*:"
-                                "*.NonEmptyRequest_testMode/*"
-                                "\""),
+            # Test RKP
+            # TODO(b/235265072): re-enable once Android changes propagate to
+            # Trusty repo.
+            #androidtest(name="vts:rkp",
+            #            command="setprop ro.boot.verifiedbootstate fake"
+            #                    "&&"
+            #                    "/data/nativetest64/"
+            #                    "VtsHalRemotelyProvisionedComponentTargetTest/"
+            #                    "VtsHalRemotelyProvisionedComponentTargetTest"
+            #                    " --gtest_filter=\""
+            #                    "-"
+            #                    # We can not satisfy the requirements of
+            #                    # prodMode attestation.
+            #                    "*.generateAndUseEcdsaP256Key_prodMode/*:"
+            #                    # TODO:
+            #                    # bootloader/test-runner/test-runner.c in
+            #                    # trusty/external/trusty needs to properly set
+            #                    # the boot flags for the following tests to pass
+            #                    "*.EmptyRequest_testMode/*:"
+            #                    "*.NewKeyPerCallInTestMode/*:"
+            #                    "*.NonEmptyRequest_testMode/*"
+            #                    "\""),
 
             # Test keymint attestation key provisioning
             androidtest(name="keymint-set-attestation-keys",

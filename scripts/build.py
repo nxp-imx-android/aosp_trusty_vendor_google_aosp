@@ -122,7 +122,6 @@ def archive_build_file(args, project, src, dest=None, optional=False):
 def is_child_of_any(path, possible_parents):
     for possible_parent in possible_parents:
         if path.startswith(possible_parent):
-            print("Found", possible_parent, "is parent of", path)
             return True
     return False
 
@@ -217,10 +216,18 @@ def assemble_sdk(args):
         clang_bindir = subprocess.check_output(
             cmd, shell=True, executable="/bin/bash").decode().strip()
         clang_dir = os.path.join(clang_bindir, "../")
+
+        cmd = f"cd {clang_dir}; git rev-parse HEAD"
+        clang_prebuilt_commit = subprocess.check_output(
+            cmd, shell=True, executable="/bin/bash").decode().strip()
+
         archive_file(sdk_archive,
                      os.path.join(clang_dir, "AndroidVersion.txt"), "clang")
         archive_file(sdk_archive,
                      os.path.join(clang_dir, "clang_source_info.md"), "clang")
+        sdk_archive.writestr(
+            os.path.join("clang", "PrebuiltCommitId.txt"),
+            clang_prebuilt_commit)
 
         # Add trusty version info
         sdk_archive.writestr("Version.txt", args.buildid)

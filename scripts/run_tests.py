@@ -162,9 +162,9 @@ def run_tests(build_config, root, project, run_disabled_tests=False,
                       flush=True)
                 status = subprocess.call(cmd)
             case trusty_build_config.TrustyTest():
-                if "--shell-command" in cmd:
-                    inner_cmd = cmd[cmd.index("--shell-command") + 1]
-                    print("Command line:", inner_cmd.replace(" ", "\\ "),
+                if hasattr(test, "shell_command"):
+                    print("Command line:",
+                          test.shell_command.replace(" ", "\\ "),
                           flush=True)
 
                 test_env = None

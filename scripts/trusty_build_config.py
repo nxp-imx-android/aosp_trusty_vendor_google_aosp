@@ -89,6 +89,21 @@ class TrustyHostTest(TrustyTest):
     """Stores a pair of a test name and a command to run on host."""
 
 
+class TrustyAndroidTest(TrustyTest):
+    """Stores a test name and command to run inside Android"""
+
+    def __init__(self, name, command, enabled=True, nameprefix="", runargs=(),
+                 timeout=None):
+        nameprefix = nameprefix + "android-test:"
+        cmd = ["run", "--headless", "--shell-command", command]
+        if timeout:
+            cmd += ['--timeout', str(timeout)]
+        if runargs:
+            cmd += list(runargs)
+        super().__init__(nameprefix + name, cmd, enabled)
+        self.shell_command = command
+
+
 class TrustyPortTest(TrustyTest):
     """Stores a trusty port name for a test to run."""
 
@@ -222,21 +237,6 @@ class TrustyBuildConfig(object):
                                             test.enabled)]
             return trusty_tests
 
-        def androidtest(name, command, enabled=True, nameprefix="", runargs=(),
-                        timeout=None):
-            nameprefix = nameprefix + "android-test:"
-            if timeout:
-                timeout_args = ['--timeout', str(timeout)]
-            else:
-                timeout_args = []
-            runargs = list(runargs)
-            return TrustyTest(nameprefix + name,
-                              ["run", "--headless",
-                               "--shell-command", command
-                              ] + timeout_args + runargs,
-                              enabled,
-                             )
-
         def androidporttest(port, cmdargs, enabled, **kwargs):
             cmdargs = list(cmdargs)
             cmd = " ".join(
@@ -244,7 +244,7 @@ class TrustyBuildConfig(object):
                     "/vendor/bin/trusty-ut-ctrl",
                     port
                 ] + cmdargs)
-            return androidtest(port, cmd, enabled, **kwargs)
+            return TrustyAndroidTest(port, cmd, enabled, **kwargs)
 
         def androidporttests(port_tests, provides=None, nameprefix="",
                              cmdargs=(), runargs=()):
@@ -277,7 +277,7 @@ class TrustyBuildConfig(object):
             "porttestflags": TrustyPortTestFlags,
             "hosttests": hosttests,
             "boottests": boottests,
-            "androidtest": androidtest,
+            "androidtest": TrustyAndroidTest,
             "androidporttests": androidporttests,
             "needs": needs,
         }

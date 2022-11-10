@@ -342,7 +342,9 @@
             # TODO(b/235265072): re-enable once Android changes propagate to
             # Trusty repo.
             #androidtest(name="vts:rkp",
-            #            command="setprop ro.boot.verifiedbootstate fake"
+            #            command="if [`getprop ro.boot.verifiedbootstate` != \"fake\" ]; then "
+            #                    "setprop ro.boot.verifiedbootstate fake; "
+            #                    "fi "
             #                    "&&"
             #                    "/data/nativetest64/"
             #                    "VtsHalRemotelyProvisionedComponentTargetTest/"
@@ -375,7 +377,9 @@
                                 "/vendor/etc/"
                                 "keymaster_soft_wrapped_attestation_keys.xml"
                                 "&&"
-                                "setprop ro.boot.verifiedbootstate fake"
+                                "if [`getprop ro.boot.verifiedbootstate` != \"fake\" ]; then "
+                                "setprop ro.boot.verifiedbootstate fake; "
+                                "fi "
                                 "&&"
                                 "/data/nativetest64/"
                                 "VtsAidlKeyMintTargetTest/"
@@ -405,7 +409,9 @@
             # TODO(b/208872187): Remove --skip_boot_pl_check once we have boot
             # patchlevel configured.
             androidtest(name="vts:keymint",
-                        command="setprop ro.boot.verifiedbootstate fake"
+                        command="if [`getprop ro.boot.verifiedbootstate` != \"fake\" ]; then "
+                                "setprop ro.boot.verifiedbootstate fake; "
+                                "fi "
                                 "&&"
                                 "/data/nativetest64/"
                                 "VtsAidlKeyMintTargetTest/"

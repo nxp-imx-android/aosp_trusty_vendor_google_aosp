@@ -212,9 +212,11 @@
                                 "-t echo -r 100"),
 
             # TIPC linux to trusty echo test repeat so 16 bit virtio index wraps
+            # Timeout is set to 15 minutes due to b/258851590.
             androidtest(name="tipc:echo-long",
                         command="/data/nativetest64/vendor/tipc-test/tipc-test "
-                                "-t echo -r 65537"),
+                                "-t echo -r 65537",
+                        timeout=(15 * 60)),
 
             # NS shares NS memory with S
             androidtest(name="tipc:send-fd",

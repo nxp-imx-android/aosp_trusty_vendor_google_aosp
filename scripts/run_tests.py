@@ -82,9 +82,9 @@ class TestResults(object):
             for test, passed in self.test_results:
                 if passed:
                     if not print_failed_only:
-                        out.write(f"[ {'OK':>8} ] {test}\n")
+                        out.write(f"[       OK ] {test}\n")
                 else:
-                    out.write(f"[ {'FAILED':^8} ] {test}\n")
+                    out.write(f"[  FAILED  ] {test}\n")
             out.write(f"[==========] {test_count} tests ran for project "
                       f"{self.project}.\n")
             if self.passed_count and not print_failed_only:

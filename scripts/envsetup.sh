@@ -42,6 +42,20 @@ export BUILDTOOLS_BINDIR=${TRUSTY_TOP}/prebuilts/build-tools/linux-x86/bin
 export BUILDTOOLS_COMMON=${TRUSTY_TOP}/prebuilts/build-tools/common
 export PY3=$BUILDTOOLS_BINDIR/py3-cmd
 
+# Additional Python libraries:
+# Most Trusty Python scripts source this file to find the hermetic
+# Python interpreter ($PY3).
+# The hermetic Python interpreter only exposes the Python standard library.
+# Set PYTHONPATH to make select, vendor'ed libraries available to hermetic
+# Python scripts.
+# WARNING: Python scripts that are copied to the build output directory should *not*
+# import these packages.
+PYTHONPATH=${TRUSTY_TOP}/prebuilts/libprotobuf/python
+PYTHONPATH=${PYTHONPATH}:${TRUSTY_TOP}/external/python/six
+PYTHONPATH=${PYTHONPATH}:${TRUSTY_TOP}/external/python/markupsafe/src
+PYTHONPATH=${PYTHONPATH}:${TRUSTY_TOP}/external/python/jinja/src
+export PYTHONPATH
+
 # Bindgen uses clang and libclang at runtime, so we need to tell it where to
 # look for these tools.
 export BINDGEN_CLANG_PATH=${TRUSTY_TOP}/prebuilts/clang/host/linux-x86/clang-r450784e/bin/clang

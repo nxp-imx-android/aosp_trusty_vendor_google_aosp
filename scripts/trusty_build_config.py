@@ -24,7 +24,7 @@
 import argparse
 import os
 import re
-from typing import List
+from typing import List, Dict
 
 script_dir = os.path.dirname(os.path.abspath(__file__))
 
@@ -44,6 +44,7 @@ class TrustyBuildConfigProject(object):
         self.build = False
         self.tests = []
         self.also_build = {}
+        self.signing_keys = None
 
 
 class TrustyPortTestFlags(object):
@@ -220,6 +221,7 @@ class TrustyBuildConfig(object):
         self.android = android
         self.projects = {}
         self.dist = []
+        self.default_signing_keys = []
         if config_file is None:
             config_file = os.path.join(script_dir, "build-config")
         self.read_config_file(config_file)
@@ -333,6 +335,19 @@ class TrustyBuildConfig(object):
                 for test in flatten_list(tests)
             ]
 
+        def devsigningkeys(default_key_paths: List[str],
+                           project_overrides: Dict[str, List[str]] = None):
+            self.default_signing_keys.extend(default_key_paths)
+            if project_overrides is None:
+                return
+
+            for project_name, overrides in project_overrides.items():
+                project = self.get_project(project_name)
+                if project.signing_keys is None:
+                    project.signing_keys = []
+                project.signing_keys.extend(overrides)
+
+
         file_format = {
             "include": include,
             "build": build,
@@ -349,6 +364,7 @@ class TrustyBuildConfig(object):
             "androidporttests": androidporttests,
             "needs": needs,
             "reboot": TrustyRebootCommand,
+            "devsigningkeys": devsigningkeys,
         }
 
         with open(path, encoding="utf8") as f:
@@ -385,6 +401,12 @@ class TrustyBuildConfig(object):
 
         return (project for project in sorted(self.projects.keys())
                 if match(project))
+
+    def signing_keys(self, project_name: str):
+        project_specific_keys = self.get_project(project_name).signing_keys
+        if project_specific_keys is None:
+            return self.default_signing_keys
+        return project_specific_keys
 
 
 def list_projects(args):

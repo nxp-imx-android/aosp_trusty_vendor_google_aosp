@@ -38,11 +38,6 @@ import trusty_build_config
 script_dir = os.path.dirname(os.path.abspath(__file__))
 
 SDK_README_PATH = "trusty/user/base/sdk/README.md"
-DEV_SIGNING_KEY_PATH = "trusty/device/arm/generic-arm64/project/keys/"
-DEV_SIGNING_KEY_FILES = [
-    "apploader_sign_test_private_key_0.der",
-    "apploader_sign_test_public_key_0.der"
-]
 TRUSTED_APP_MAKEFILE_PATH = "trusty/user/base/make/trusted_app.mk"
 TRUSTED_LOADABLE_APP_MAKEFILE_PATH = "trusty/kernel/make/loadable_app.mk"
 GEN_MANIFEST_MAKEFILE_PATH = "trusty/user/base/make/gen_manifest.mk"
@@ -169,7 +164,7 @@ def archive_file(zip_archive, src_file, dest_dir="", optional=False):
                       os.path.join(dest_dir, os.path.basename(src_file)))
 
 
-def assemble_sdk(args):
+def assemble_sdk(build_config, args):
     """Assemble Trusty SDK archive"""
     filename = os.path.join(args.archive, "trusty_sdk-" + args.buildid + ".zip")
     with ZipFile(filename, 'a', compression=ZIP_DEFLATED) as sdk_archive:
@@ -189,18 +184,18 @@ def assemble_sdk(args):
             src = os.path.join(project_buildroot, "sdk", "make")
             archive_dir(sdk_archive, src, project_makefile_dir)
 
+            project_tools_dir = os.path.join("sysroots", project, "tools")
             src = os.path.join(project_buildroot, "host_tools",
                                "apploader_package_tool")
-            archive_file(sdk_archive, src, "tools", optional=True)
+            archive_file(sdk_archive, src, project_tools_dir, optional=True)
 
             src = os.path.join(project_buildroot, "sdk", "tools",
                                "manifest_compiler.py")
-            archive_file(sdk_archive, src, "tools")
+            archive_file(sdk_archive, src, project_tools_dir)
 
-        # Add AOSP qemu dev signing key.
-        for filename in DEV_SIGNING_KEY_FILES:
-            archive_file(sdk_archive,
-                         os.path.join(DEV_SIGNING_KEY_PATH, filename), "tools")
+            project_keys = build_config.signing_keys(project)
+            for filename in project_keys:
+                archive_file(sdk_archive, filename, project_tools_dir)
 
         # Copy the app makefile
         archive_file(sdk_archive, TRUSTED_APP_MAKEFILE_PATH, "make")
@@ -369,7 +364,7 @@ def archive(build_config, args):
         archive_symbols(args, project)
 
     # create sdk zip
-    assemble_sdk(args)
+    assemble_sdk(build_config, args)
 
 
 def get_build_deps(project_name, project, project_names, already_built):

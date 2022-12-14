@@ -83,6 +83,10 @@
             "sdb7d",
         ],
     ),
+    devsigningkeys([
+        "trusty/device/arm/generic-arm64/project/keys/apploader_sign_test_private_key_0.der",
+        "trusty/device/arm/generic-arm64/project/keys/apploader_sign_test_public_key_0.der"
+    ]),
     include("./test-map"),
     include("../../proprietary/scripts/build-config", optional=True),
 ]

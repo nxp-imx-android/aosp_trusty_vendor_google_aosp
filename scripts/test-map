@@ -462,6 +462,21 @@
                         command="/data/nativetest64/vendor/"
                                 "libtrusty_metrics_test/"
                                 "libtrusty_metrics_test"),
+            # Busy test validating that linux acts upon the
+            # trusty thread priority or the high-priority workqueue setting
+            androidtest(name="busy-test-high-to-low-priority-workqueue",
+                        command="nice -n -20 top -b -m 5 -n 11 -d 2 &"
+                                "echo 0 >/sys/module/trusty_core/parameters/use_high_wq"
+                                ";"
+                                "timeout 10 trusty-ut-ctrl com.android.kernel.busy-test"
+                                ";"
+                                "echo 1 > /sys/module/trusty_core/parameters/use_high_wq"
+                                ";"
+                                "timeout 10 trusty-ut-ctrl com.android.kernel.busy-test"
+                                ";"
+                                "echo 0 >/sys/module/trusty_core/parameters/use_high_wq"
+                                "&&"
+                                "wait"),
         ],
     ),
 ]

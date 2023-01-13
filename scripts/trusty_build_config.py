@@ -24,7 +24,7 @@
 import argparse
 import os
 import re
-from typing import List, Dict
+from typing import List, Dict, Optional
 
 script_dir = os.path.dirname(os.path.abspath(__file__))
 
@@ -335,8 +335,9 @@ class TrustyBuildConfig(object):
                 for test in flatten_list(tests)
             ]
 
-        def devsigningkeys(default_key_paths: List[str],
-                           project_overrides: Dict[str, List[str]] = None):
+        def devsigningkeys(
+            default_key_paths: List[str],
+            project_overrides: Optional[Dict[str, List[str]]] = None):
             self.default_signing_keys.extend(default_key_paths)
             if project_overrides is None:
                 return

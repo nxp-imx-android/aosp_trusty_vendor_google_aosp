@@ -258,6 +258,12 @@ def run_tests(build_config, root, project, run_disabled_tests=False,
             test_results.add_result(test.name, status == 0, not retry)
         return status
 
+    # the retry mechanism is intended to allow a batch run of all tests to pass
+    # even if a small handful of tests exhibit flaky behavior. If a test filter
+    # was provided or debug on error is set, we are most likely not doing a
+    # batch run (as is the case for presubmit testing) meaning that it is
+    # not all that helpful to retry failing tests vs. finishing the run faster.
+    retry = test_filter is None and not debug_on_error
     try:
         for test in project_config.tests:
             if not test.enabled and not run_disabled_tests:
@@ -265,7 +271,7 @@ def run_tests(build_config, root, project, run_disabled_tests=False,
             if not test_should_run(test.name, test_filter):
                 continue
 
-            run_test(test)
+            run_test(test, retry)
     finally:
         # finally is used here to make sure that we attempt to shutdown the
         # test environment no matter whether an exception was raised or not

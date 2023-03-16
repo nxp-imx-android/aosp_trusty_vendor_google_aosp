@@ -459,11 +459,6 @@
                                 "\"",
                         timeout=(60 * 60)),
 
-            # Metrics test
-            androidtest(name="trusty-metrics",
-                        command="/data/nativetest64/vendor/"
-                                "libtrusty_metrics_test/"
-                                "libtrusty_metrics_test"),
             # Busy test validating that linux acts upon the
             # trusty thread priority or the high-priority workqueue setting
             androidtest(name="busy-test-high-to-low-priority-workqueue",

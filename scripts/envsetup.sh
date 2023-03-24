@@ -29,10 +29,10 @@ gettop() {
 }
 
 export TRUSTY_TOP=$(gettop)
-export CLANG_BINDIR=${TRUSTY_TOP}/prebuilts/clang/host/linux-x86/clang-r450784e/bin
-export CLANG_HOST_LIBDIR=${CLANG_BINDIR}/../lib64
+export CLANG_BINDIR=${TRUSTY_TOP}/prebuilts/clang/host/linux-x86/clang-r475365b/bin
+export CLANG_HOST_LIBDIR=${CLANG_BINDIR}/../lib
 export CLANG_TOOLS_BINDIR=${TRUSTY_TOP}/prebuilts/clang-tools/linux-x86/bin
-export LINUX_CLANG_BINDIR=${TRUSTY_TOP}/prebuilts/clang/host/linux-x86/clang-r450784e/bin
+export LINUX_CLANG_BINDIR=${TRUSTY_TOP}/prebuilts/clang/host/linux-x86/clang-r475365b/bin
 export RUST_BINDIR=${TRUSTY_TOP}/prebuilts/rust/linux-x86/1.65.0/bin
 export RUST_HOST_LIBDIR=${RUST_BINDIR}/../lib/rustlib/x86_64-unknown-linux-gnu/lib
 export ARCH_arm_TOOLCHAIN_PREFIX=${CLANG_BINDIR}/llvm-
@@ -59,5 +59,5 @@ export PYTHONPATH
 
 # Bindgen uses clang and libclang at runtime, so we need to tell it where to
 # look for these tools.
-export BINDGEN_CLANG_PATH=${TRUSTY_TOP}/prebuilts/clang/host/linux-x86/clang-r450784e/bin/clang
-export BINDGEN_LIBCLANG_PATH=${TRUSTY_TOP}/prebuilts/clang/host/linux-x86/clang-r450784e/lib64
+export BINDGEN_CLANG_PATH=${TRUSTY_TOP}/prebuilts/clang/host/linux-x86/clang-r475365b/bin/clang
+export BINDGEN_LIBCLANG_PATH=${TRUSTY_TOP}/prebuilts/clang/host/linux-x86/clang-r475365b/lib

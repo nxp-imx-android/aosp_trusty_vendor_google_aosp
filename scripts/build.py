@@ -244,7 +244,7 @@ def build(args):
     for project in args.project:
         cmd = "export BUILDROOT=" + args.build_root
         cmd += "; export BUILDID=" + args.buildid
-        cmd += "; nice make " + project + " -j " + str(args.jobs)
+        cmd += "; nice make " + project + " -f external/lk/makefile -j " + str(args.jobs)
         # Call envsetup.  If it fails, abort.
         envsetup = os.path.join(script_dir, "envsetup.sh")
         cmd = f"source {envsetup:s} && ({cmd:s})"

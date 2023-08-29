@@ -18,6 +18,7 @@ LKROOT ?= external/lk
 LKINC ?=  trusty/kernel \
           external/lk \
           external/headers \
+          external/trusty/headers \
           trusty/hardware/nxp \
           trusty/user/base \
           trusty/device/arm/generic-arm64 \

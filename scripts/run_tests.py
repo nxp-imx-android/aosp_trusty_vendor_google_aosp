@@ -28,10 +28,12 @@ Run tests for a project.
 
 import argparse
 import importlib
+import os
+import re
 import subprocess
 import sys
 import time
-from typing import List, Optional
+from typing import Optional
 from collections import namedtuple
 
 from trusty_build_config import TrustyTest, TrustyCompositeTest
@@ -116,23 +118,109 @@ class TestResults(object):
                           "testing after which point, no tests were retried.\n")
 
 
-def test_should_run(testname, test_filter):
+class MultiProjectTestResults():
+    """Stores results from testing multiple projects.
+
+    Attributes:
+        test_results: List containing the results for each project.
+        failed_projects: List of projects with test failures.
+        tests_passed: Count of test passes across all projects.
+        tests_failed: Count of test failures across all projects.
+        had_passes: Count of all projects with any test passes.
+        had_failures: Count of all projects with any test failures.
+    """
+    def __init__(self, test_results: list[TestResults]):
+        self.test_results = test_results
+        self.failed_projects = []
+        self.tests_passed = 0
+        self.tests_failed = 0
+        self.had_passes = 0
+        self.had_failures = 0
+
+        for result in self.test_results:
+            if not result.passed:
+                self.failed_projects.append(result.project)
+            self.tests_passed += result.passed_count
+            self.tests_failed += result.failed_count
+            if result.passed_count:
+                self.had_passes += 1
+            if result.failed_count:
+                self.had_failures += 1
+
+
+    def print_results(self):
+        """Prints the test results to stdout and stderr."""
+        for test_result in self.test_results:
+            test_result.print_results()
+
+        sys.stdout.write("\n")
+        if self.had_passes:
+            sys.stdout.write(f"[  PASSED  ] {self.tests_passed} tests in "
+                             f"{self.had_passes} projects.\n")
+        if self.had_failures:
+            sys.stdout.write(f"[  FAILED  ] {self.tests_failed} tests in "
+                             f"{self.had_failures} projects.\n")
+            sys.stdout.flush()
+
+            # Print the failed tests again to stderr as the build server will
+            # store this in a separate file with a direct link from the build
+            # status page. The full build long page on the build server, buffers
+            # stdout and stderr and interleaves them at random. By printing
+            # the summary to both stderr and stdout, we get at least one of them
+            # at the bottom of that file.
+            for test_result in self.test_results:
+                test_result.print_results(print_failed_only=True)
+            sys.stderr.write(f"[  FAILED  ] {self.tests_failed,} tests in "
+                             f"{self.had_failures} projects.\n")
+
+
+def test_should_run(testname: str, test_filters: Optional[list[re.Pattern]]):
     """Check if test should run.
 
     Args:
         testname: Name of test to check.
-        test_filter: Regex list that limits the tests to run.
+        test_filters: Regex list that limits the tests to run.
 
     Returns:
-        True if test_filter list is empty or None, True if testname matches any
-        regex in test_filter, False otherwise.
+        True if test_filters list is empty or None, True if testname matches any
+        regex in test_filters, False otherwise.
     """
-    if not test_filter:
+    if not test_filters:
         return True
-    for r in test_filter:
+    for r in test_filters:
         if r.search(testname):
             return True
     return False
+
+
+def projects_to_test(
+    build_config: TrustyBuildConfig,
+    projects: list[str],
+    test_filters: list[re.Pattern],
+    run_disabled_tests: bool = False,
+) -> list[str]:
+    """Checks which projects have any of the specified tests.
+
+    Args:
+        build_config: TrustyBuildConfig object.
+        projects: Names of the projects to search for active tests.
+        test_filters: List that limits the tests to run. Projects
+            without any tests that match a filter will be skipped.
+        run_disabled_tests: Also run disabled tests from config file.
+
+    Returns:
+        A list of projects with tests that should be run
+    """
+    def has_test(name: str):
+        project = build_config.get_project(name)
+        for test in project.tests:
+            if not test.enabled and not run_disabled_tests:
+                continue
+            if test_should_run(test.name, test_filters):
+                return True
+        return False
+
+    return [project for project in projects if has_test(project)]
 
 
 # Put a global cap on the number of retries to detect flaky tests such that we
@@ -143,8 +231,15 @@ def test_should_run(testname, test_filter):
 MAX_RETRIES = 10
 
 
-def run_tests(build_config, root, project, run_disabled_tests=False,
-              test_filter=None, verbose=False, debug_on_error=False):
+def run_tests(
+    build_config: TrustyBuildConfig,
+    root: os.PathLike,
+    project: str,
+    run_disabled_tests: bool = False,
+    test_filters: Optional[list[re.Pattern]] = None,
+    verbose: bool=False,
+    debug_on_error: bool=  False
+) -> TestResults:
     """Run tests for a project.
 
     Args:
@@ -152,7 +247,7 @@ def run_tests(build_config, root, project, run_disabled_tests=False,
         root: Trusty build root output directory.
         project: Project name.
         run_disabled_tests: Also run disabled tests from config file.
-        test_filter: Optional list that limits the tests to run.
+        test_filters: Optional list that limits the tests to run.
         verbose: Enable debug output.
         debug_on_error: Wait for debugger connection on errors.
 
@@ -181,7 +276,7 @@ def run_tests(build_config, root, project, run_disabled_tests=False,
 
         return run
 
-    def print_test_command(name, cmd: Optional[List[str]] = None):
+    def print_test_command(name, cmd: Optional[list[str]] = None):
         print()
         print("Running", name, "on", test_results.project)
         if cmd:
@@ -263,15 +358,15 @@ def run_tests(build_config, root, project, run_disabled_tests=False,
     # was provided or debug on error is set, we are most likely not doing a
     # batch run (as is the case for presubmit testing) meaning that it is
     # not all that helpful to retry failing tests vs. finishing the run faster.
-    retry = test_filter is None and not debug_on_error
+    retry = test_filters is None and not debug_on_error
     try:
         for test in project_config.tests:
             if not test.enabled and not run_disabled_tests:
                 continue
-            if not test_should_run(test.name, test_filter):
+            if not test_should_run(test.name, test_filters):
                 continue
 
-            run_test(test, retry)
+            run_test(test, None, retry)
     finally:
         # finally is used here to make sure that we attempt to shutdown the
         # test environment no matter whether an exception was raised or not
@@ -283,18 +378,85 @@ def run_tests(build_config, root, project, run_disabled_tests=False,
     return test_results
 
 
+def test_projects(
+    build_config: TrustyBuildConfig,
+    root: os.PathLike,
+    projects: list[str],
+    run_disabled_tests: bool = False,
+    test_filters: Optional[list[re.Pattern]] = None,
+    verbose: bool=False,
+    debug_on_error: bool=  False,
+) -> MultiProjectTestResults:
+    """Run tests for multiple project.
+
+    Args:
+        build_config: TrustyBuildConfig object.
+        root: Trusty build root output directory.
+        projects: Names of the projects to run tests for.
+        run_disabled_tests: Also run disabled tests from config file.
+        test_filters: Optional list that limits the tests to run. Projects
+            without any tests that match a filter will be skipped.
+        verbose: Enable debug output.
+        debug_on_error: Wait for debugger connection on errors.
+
+    Returns:
+        MultiProjectTestResults listing overall and detailed test results.
+    """
+    if test_filters:
+        projects = projects_to_test(
+            build_config, projects, test_filters,
+            run_disabled_tests=run_disabled_tests)
+
+    results = []
+    for project in projects:
+        results.append(run_tests(
+            build_config,
+            root,
+            project,
+            run_disabled_tests=run_disabled_tests,
+            test_filters=test_filters,
+            verbose=verbose,
+            debug_on_error=debug_on_error,
+        ))
+    return MultiProjectTestResults(results)
+
+
+def default_root() -> str:
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    top = os.path.abspath(os.path.join(script_dir, "../../../../.."))
+    return os.path.join(top, "build-root")
+
+
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--root", type=str, required=True,
+    parser.add_argument("project", type=str, nargs="+",
+                        help="Project(s) to test.")
+    parser.add_argument("--build-root", type=str, default=default_root(),
                         help="Root of intermediate build directory.")
-    parser.add_argument("--project", type=str, required=True,
-                        help="Project to test.")
+    parser.add_argument("--run_disabled_tests",
+                        help="Also run disabled tests from config file.",
+                        action="store_true")
+    parser.add_argument("--test", type=str, action="append",
+                        help="Only run tests that match the provided regexes.")
+    parser.add_argument("--verbose", help="Enable debug output.",
+                        action="store_true")
+    parser.add_argument("--debug_on_error",
+                        help="Wait for debugger connection on errors.",
+                        action="store_true")
     args = parser.parse_args()
 
     build_config = TrustyBuildConfig()
-    test_results = run_tests(build_config, args.root, args.project)
+
+    test_filters = ([re.compile(test) for test in args.test]
+                    if args.test else None)
+    test_results = test_projects(build_config, args.build_root, args.project,
+                                run_disabled_tests=args.run_disabled_tests,
+                                test_filters=test_filters,
+                                verbose=args.verbose,
+                                debug_on_error=args.debug_on_error)
     test_results.print_results()
-    if not test_results.passed:
+
+    if test_results.failed_projects:
         sys.exit(1)
 
 

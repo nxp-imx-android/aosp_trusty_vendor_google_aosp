@@ -478,19 +478,14 @@ def main(default_config=None):
     if not ok:
         sys.exit(1)
 
-    if args.test:
-        args.test = [re.compile(testpattern) for testpattern in args.test]
-
-        def has_test(proj_name):
-            """filter function to check if a project has args.test."""
-            proj = build_config.get_project(proj_name)
-            for test in proj.tests:
-                if not test.enabled and not args.run_disabled_tests:
-                    continue
-                if run_tests.test_should_run(test.name, args.test):
-                    return True
-            return False
-        projects = [project for project in projects if has_test(project)]
+    # If there's any test filters, ignore projects that don't have
+    # any tests that match those filters.
+    test_filters = ([re.compile(test) for test in args.test]
+                    if args.test else None)
+    if test_filters:
+        projects = run_tests.projects_to_test(
+            build_config, projects, test_filters,
+            run_disabled_tests=args.run_disabled_tests)
 
     # find build dependencies
     projects_old = projects
@@ -513,55 +508,15 @@ def main(default_config=None):
 
     # Run tests
     if not args.skip_tests:
-        test_failed = []
-        test_results = []
-        tests_passed = 0
-        tests_failed = 0
-        projects_passed = 0
-        projects_failed = 0
+        test_result = run_tests.test_projects(
+            build_config, args.build_root, projects,
+            run_disabled_tests=args.run_disabled_tests,
+            test_filters=test_filters,
+            verbose=args.verbose,
+            debug_on_error=args.debug_on_error)
 
-        for project in projects:
-            test_result = run_tests.run_tests(build_config, args.build_root,
-                                              project, run_disabled_tests=
-                                              args.run_disabled_tests,
-                                              test_filter=args.test,
-                                              verbose=args.verbose,
-                                              debug_on_error=
-                                              args.debug_on_error)
-            if not test_result.passed:
-                test_failed.append(project)
-            if test_result.passed_count:
-                projects_passed += 1
-                tests_passed += test_result.passed_count
-            if test_result.failed_count:
-                projects_failed += 1
-                tests_failed += test_result.failed_count
-            test_results.append(test_result)
-
-        for test_result in test_results:
-            test_result.print_results()
-
-        sys.stdout.write("\n")
-        if projects_passed:
-            sys.stdout.write(f"[  PASSED  ] {tests_passed} tests in "
-                             f"{projects_passed} projects.\n")
-        if projects_failed:
-            sys.stdout.write(f"[  FAILED  ] {tests_failed} tests in "
-                             f"{projects_failed} projects.\n")
-            sys.stdout.flush()
-
-            # Print the failed tests again to stderr as the build server will
-            # store this in a separate file with a direct link from the build
-            # status page. The full build long page on the build server, buffers
-            # stdout and stderr and interleaves them at random. By printing
-            # the summary to both stderr and stdout, we get at least one of them
-            # at the bottom of that file.
-            for test_result in test_results:
-                test_result.print_results(print_failed_only=True)
-            sys.stderr.write(f"[  FAILED  ] {tests_failed,} tests in "
-                             f"{projects_failed} projects.\n")
-
-        if test_failed:
+        test_result.print_results()
+        if test_result.failed_projects:
             sys.exit(1)
 
 

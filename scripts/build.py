@@ -24,7 +24,6 @@ Invoke trusty build system and run tests.
 
 import argparse
 import getpass
-import glob
 import multiprocessing
 import os
 import pathlib
@@ -242,9 +241,9 @@ def build(args):
     failed = []
 
     for project in args.project:
-        cmd = "export BUILDROOT=" + args.build_root
-        cmd += "; export BUILDID=" + args.buildid
-        cmd += "; nice make " + project + " -f external/lk/makefile -j " + str(args.jobs)
+        cmd = (f'export BUILDROOT={args.build_root};'
+               f'export BUILDID={args.buildid}; nice make {project} '
+               f'-f external/lk/makefile -j {args.jobs}')
         # Call envsetup.  If it fails, abort.
         envsetup = os.path.join(script_dir, "envsetup.sh")
         cmd = f"source {envsetup:s} && ({cmd:s})"
@@ -315,8 +314,16 @@ def archive_symbols(args, project):
         zip_dir(zip_archive, proj_buildroot, "",
                 lambda f: f.endswith("syms.elf"))
 
+
 def create_uuid_map(args, project):
     """Creating a mapping txt file for uuid and symbol files"""
+
+    def time_from_bytes(f, n: int) -> str:
+        """Read n bytes from f as an int, and convert that int to a string."""
+        time = int.from_bytes(f.read(n), byteorder='little')
+        width = 2 * n
+        return f'{time:0{width}x}'
+
     proj_buildroot = os.path.join(args.build_root, "build-" + project)
     filename = os.path.join(args.archive, "uuid-map.txt")
     zipfile = os.path.join(args.archive, f"{project}-{args.buildid}.syms.zip")
@@ -325,31 +332,20 @@ def create_uuid_map(args, project):
     for file in sym_files:
         folder = file.parents[0]
         manifest_files = list(pathlib.Path(folder).glob("*.manifest"))
-        if(len(manifest_files) == 1):
+        if len(manifest_files) == 1:
             manifest = manifest_files[0]
-            with open(manifest, "rb") as f:
-                time_low = f"{int.from_bytes(f.read(4), byteorder='little'):0{8}x}"
-                time_mid = f"{int.from_bytes(f.read(2), byteorder='little'):0{4}x}"
-                time_hi_and_version = f"{int.from_bytes(f.read(2), byteorder='little'):0{4}x}"
-                clock_seq_and_node = []
-                sz = 8
-                while(sz):
-                    clock_seq_and_node.append(
-                        f"{int.from_bytes(f.read(1), byteorder='little'):0{2}x}")
-                    sz-=1
-                uuid_str = '{}-{}-{}-{}{}-{}{}{}{}{}{}'.format(time_low,
-                                        time_mid,
-                                        time_hi_and_version,
-                                        clock_seq_and_node[0],
-                                        clock_seq_and_node[1],
-                                        clock_seq_and_node[2],
-                                        clock_seq_and_node[3],
-                                        clock_seq_and_node[4],
-                                        clock_seq_and_node[5],
-                                        clock_seq_and_node[6],
-                                        clock_seq_and_node[7])
-            with open(filename, 'a') as f:
-                f.write('{}, {}\n'.format(uuid_str, file.relative_to(proj_buildroot)))
+            with open(manifest, 'rb') as f:
+                time_low = time_from_bytes(f, 4)
+                time_mid = time_from_bytes(f, 2)
+                time_hi_and_version = time_from_bytes(f, 2)
+                clock_seq_and_node = [time_from_bytes(f, 1) for _ in range(8)]
+                uuid_str = (f'{time_low}-{time_mid}-{time_hi_and_version}-'
+                            f'{clock_seq_and_node[0]}{clock_seq_and_node[1]}-'
+                            f'{clock_seq_and_node[2]}{clock_seq_and_node[3]}'
+                            f'{clock_seq_and_node[4]}{clock_seq_and_node[5]}'
+                            f'{clock_seq_and_node[6]}{clock_seq_and_node[7]}')
+            with open(filename, 'a', encoding='utf-8') as f:
+                f.write(f'{uuid_str}, {file.relative_to(proj_buildroot)}\n')
 
     with ZipFile(zipfile, 'a', compression=ZIP_DEFLATED) as zip_archive:
         zip_file(zip_archive, os.path.join(args.archive, "uuid-map.txt"))

@@ -325,7 +325,7 @@ def create_uuid_map(args, project):
         return f'{time:0{width}x}'
 
     proj_buildroot = os.path.join(args.build_root, "build-" + project)
-    filename = os.path.join(args.archive, "uuid-map.txt")
+    filename = os.path.join(args.archive, f"{project}-{args.buildid}-uuid-map.txt")
     zipfile = os.path.join(args.archive, f"{project}-{args.buildid}.syms.zip")
     sym_files = list(pathlib.Path(proj_buildroot).rglob("*.syms.elf"))
 
@@ -347,8 +347,10 @@ def create_uuid_map(args, project):
             with open(filename, 'a', encoding='utf-8') as f:
                 f.write(f'{uuid_str}, {file.relative_to(proj_buildroot)}\n')
 
-    with ZipFile(zipfile, 'a', compression=ZIP_DEFLATED) as zip_archive:
-        zip_file(zip_archive, os.path.join(args.archive, "uuid-map.txt"))
+    if os.path.exists(filename):
+        with ZipFile(zipfile, 'a', compression=ZIP_DEFLATED) as zip_archive:
+            zip_file(zip_archive, filename)
+        os.remove(filename)
 
 def archive(build_config, args):
     if args.archive is None:

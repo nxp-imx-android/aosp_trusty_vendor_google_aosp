@@ -352,6 +352,17 @@ def create_uuid_map(args, project):
             zip_file(zip_archive, filename)
         os.remove(filename)
 
+def create_scripts_archive(args, project):
+    """Create an archive for the scripts"""
+    coverage_script = os.path.join(script_dir, "genReport.py")
+    scripts_zip = os.path.join(args.archive, "scripts-" + args.buildid + ".zip")
+    if not os.path.exists(coverage_script):
+        print("Coverage script does not exist!")
+        return
+
+    with ZipFile(scripts_zip, 'a', compression=ZIP_DEFLATED) as zip_archive:
+        zip_file(zip_archive, coverage_script)
+
 def archive(build_config, args):
     if args.archive is None:
         return
@@ -403,6 +414,9 @@ def archive(build_config, args):
 
         # create map between UUID and symbolic files
         create_uuid_map(args, project)
+
+        # create zip file containing scripts
+        create_scripts_archive(args, project)
 
     # create sdk zip
     assemble_sdk(build_config, args)

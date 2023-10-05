@@ -293,9 +293,12 @@ class TrustyBuildConfig(object):
                 project = self.get_project(project_name)
                 project.tests += flatten_list(tests)
 
-        def hosttest(host_cmd, enabled=True):
-            return TrustyHostTest("host-test:" + host_cmd,
-                                  ["host_tests/" + host_cmd], enabled)
+        def hosttest(host_cmd, enabled=True, repeat=1):
+            cmd = ["host_tests/" + host_cmd]
+            # TODO: assumes that host test is always a googletest
+            if repeat > 1:
+                cmd.append(f"--gtest_repeat={repeat}")
+            return TrustyHostTest("host-test:" + host_cmd, cmd, enabled)
 
         def hosttests(tests):
             return [test for test in flatten_list(tests)
